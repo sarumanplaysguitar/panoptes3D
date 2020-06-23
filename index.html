@@ -9,16 +9,18 @@
       box-sizing: border-box;
     }
 
-    *,
+    /* *,
     *:before,
     *:after {
       box-sizing: inherit;
       overflow: hidden;
-    }
+    } */
 
     body {
       margin: 0;
       background: #3A3A3A;
+      box-sizing: inherit;
+      overflow: hidden;
     }
 
     .frame {
@@ -26,6 +28,8 @@
       display: flex;
       width: 100vw;
       height: 100vh;
+      /* box-sizing: inherit;
+      overflow: hidden; */
     }
 
     .frame>* {
@@ -47,12 +51,18 @@
     </div>
   </div>
 
-  <script src="js/three.min.js"></script>
-  <script src="js/OrbitControls.js"></script>
-  <script src="js/GLTFLoader.js"></script>
-  <script src="js/dat.gui.min.js"></script>
+  <script type="text/javascript" src="js/three.min.js"></script>
+  <script type="text/javascript" src="js/OrbitControls.js"></script>
+  <script type="text/javascript" src="js/GLTFLoader.js"></script>
+  <script type="text/javascript" src="js/dat.gui.min.js"></script>
 
-  <script>
+  <script type="text/javascript">
+
+    const pi = Math.PI;
+
+    function deg_to_rad(deg) {
+      return deg * pi / 180;
+    }
 
     // FPS stats (by mrdoob) 📊
 
@@ -115,14 +125,7 @@
 
     var loader = new THREE.GLTFLoader();
 
-    // loader.load('assets/goddess1.glb', onLoad);
-    // loader.load('assets/goddess2.glb', onLoad);
-    // loader.load('assets/low_wall.glb', onLoad);
-    // loader.load('assets/shrine_cols.glb', onLoad);
-    // loader.load('assets/shrine_vases.glb', onLoad);
-    // loader.load('assets/shrine_base.glb', onLoad);
-    // loader.load('assets/backwall.glb', onLoad);
-    // loader.load('assets/floral_columns.glb', onLoad);
+    // loader.load('assets/object.glb', onLoad);
 
     function onLoad(gltf) {
       console.log(gltf);
@@ -131,19 +134,58 @@
       scene.add(gltf.scene.children[0]);
     }
 
-    // test box
-    const geometry = new THREE.BoxGeometry(200, 200, 200);
-    const material = new THREE.MeshPhongMaterial({
+    // Test box 📦
+    const box_geo = new THREE.BoxGeometry(1, 1, 1);
+    const box_mat = new THREE.MeshPhongMaterial({
       color: 0x555555,
       specular: 0xffffff,
       shininess: 5,
       flatShading: THREE.SmoothShading
     });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+    const test_box = new THREE.Mesh(box_geo, box_mat);
+    test_box.translateY(2);
+    test_box.translateX(2);
+    scene.add(test_box);
 
-    // Demo input GUI
-    var gui = new dat.GUI({ autoPlace: true });
+    // Test box 2 📦
+    const box2_geo = new THREE.BoxGeometry(1, 1, 1);
+    const box2_mat = new THREE.MeshPhongMaterial({
+      color: 0x555555,
+      specular: 0xffffff,
+      shininess: 5,
+      flatShading: THREE.SmoothShading
+    });
+    const test_box2 = new THREE.Mesh(box2_geo, box2_mat);
+    // test_box2.translateY(1);
+    // test_box2.translateX(2);
+    test_box2.scale.x = 2;
+    test_box2.scale.z = 2;
+    // test_box2.parent = test_box;
+
+    scene.add(test_box2);
+
+
+    test_box.add(test_box2);
+
+
+    var guiControls = new function () {
+      this.rotationX = 0.;
+      this.rotationY = 0.;
+      this.rotationZ = 0.;
+      this.childrotationX = 0.;
+      this.childrotationY = 0.;
+      this.childrotationZ = 0.;
+    }
+
+    // Demo input GUI 🕹
+    var gui = new dat.GUI();
+    gui.add(guiControls, 'rotationX', 0, 360);
+    gui.add(guiControls, 'rotationY', 0, 360);
+    gui.add(guiControls, 'rotationZ', 0, 360);
+    gui.add(guiControls, 'childrotationX', 0, 360);
+    gui.add(guiControls, 'childrotationY', 0, 360);
+    gui.add(guiControls, 'childrotationZ', 0, 360);
+
 
     // Resize canvas with window ↗️
 
@@ -168,7 +210,12 @@
 
       resizeCanvasToDisplaySize();
 
-      // mesh.rotation.x = time * 1;
+      test_box.rotation.x = deg_to_rad(guiControls.rotationX);
+      test_box.rotation.y = deg_to_rad(guiControls.rotationY);
+      test_box.rotation.z = deg_to_rad(guiControls.rotationZ);
+      test_box2.rotation.x = deg_to_rad(guiControls.childrotationX);
+      test_box2.rotation.y = deg_to_rad(guiControls.childrotationY);
+      test_box2.rotation.z = deg_to_rad(guiControls.childrotationZ);
       // mesh.rotation.y = time * 1;
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
