@@ -75,9 +75,10 @@
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true });
     // renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set(30, 30, 30);
+    camera.position.set(15, 15, 15);
     // controls = new THREE.PointerLockControls(camera, renderer.domElement);
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
+    // controls.target.set( 0, 4, 0 ); <- IDK how to make this effective immediately o_o
     controls.enablePan = false;
 
     // Scene setup 🖼
@@ -98,22 +99,27 @@
 
     // Lighting 💡
 
-    const light1 = new THREE.PointLight(0xff6200, 0.5, 0);
-    light1.position.set(-100, 100, 30);
-    scene.add(light1);
+    // const light1 = new THREE.PointLight(0xffffff, 3, 0);
+    // light1.position.set(-100, 100, 30);
+    // scene.add(light1);
 
-    const light2 = new THREE.PointLight(0xff6200, 0.5, 0);
-    light2.position.set(100, 100, 30);
-    scene.add(light2);
+    // const light2 = new THREE.PointLight(0xff6200, 0.5, 0);
+    // light2.position.set(100, 100, 30);
+    // scene.add(light2);
 
 
-    const light3 = new THREE.PointLight(0xff6200, 0.5, 0);
+    const light3 = new THREE.PointLight(0x007bff, 0.5, 0);
+    light3.position.set(10, 10, 10);
     scene.add(light3);
 
-    var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    scene.add(directionalLight);
+    const light4 = new THREE.PointLight(0x007bff, 0.5, 0);
+    light4.position.set(-10, 10, -10);
+    scene.add(light4);
 
-    var light = new THREE.AmbientLight(0xffd6ff, intensity = 0.75); // soft warm light
+    // var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    // scene.add(directionalLight);
+
+    var light = new THREE.AmbientLight(0xf2f8ff, intensity = 1);
     scene.add(light);
 
 
@@ -125,67 +131,31 @@
 
     var loader = new THREE.GLTFLoader();
 
-    // loader.load('assets/object.glb', onLoad);
+    var unit;
+
+    loader.load('assets/unit.glb', onLoad);
 
     function onLoad(gltf) {
       console.log(gltf);
-      model = gltf.scene;
+      unit = gltf.scene;
+      // mount = gltf.scene.children[0];
 
-      scene.add(gltf.scene.children[0]);
+      scene.add(unit);
+      // console.log(unit);
     }
-
-    // Test box 📦
-    const box_geo = new THREE.BoxGeometry(1, 1, 1);
-    const box_mat = new THREE.MeshPhongMaterial({
-      color: 0x555555,
-      specular: 0xffffff,
-      shininess: 5,
-      flatShading: THREE.SmoothShading
-    });
-    const test_box = new THREE.Mesh(box_geo, box_mat);
-    test_box.translateY(2);
-    test_box.translateX(2);
-    scene.add(test_box);
-
-    // Test box 2 📦
-    const box2_geo = new THREE.BoxGeometry(1, 1, 1);
-    const box2_mat = new THREE.MeshPhongMaterial({
-      color: 0x555555,
-      specular: 0xffffff,
-      shininess: 5,
-      flatShading: THREE.SmoothShading
-    });
-    const test_box2 = new THREE.Mesh(box2_geo, box2_mat);
-    // test_box2.translateY(1);
-    // test_box2.translateX(2);
-    test_box2.scale.x = 2;
-    test_box2.scale.z = 2;
-    // test_box2.parent = test_box;
-
-    scene.add(test_box2);
-
-
-    test_box.add(test_box2);
 
 
     var guiControls = new function () {
-      this.rotationX = 0.;
-      this.rotationY = 0.;
-      this.rotationZ = 0.;
-      this.childrotationX = 0.;
-      this.childrotationY = 0.;
-      this.childrotationZ = 0.;
+      this.RA = -50.;
+      this.Dec = 70.;
+      this.Latitude = 34.;
     }
 
     // Demo input GUI 🕹
     var gui = new dat.GUI();
-    gui.add(guiControls, 'rotationX', 0, 360);
-    gui.add(guiControls, 'rotationY', 0, 360);
-    gui.add(guiControls, 'rotationZ', 0, 360);
-    gui.add(guiControls, 'childrotationX', 0, 360);
-    gui.add(guiControls, 'childrotationY', 0, 360);
-    gui.add(guiControls, 'childrotationZ', 0, 360);
-
+    gui.add(guiControls, 'RA', -180, 180);
+    gui.add(guiControls, 'Dec', -180, 180);
+    gui.add(guiControls, 'Latitude', 0, 90);
 
     // Resize canvas with window ↗️
 
@@ -202,6 +172,8 @@
       }
     }
 
+    var firsttime = true;
+
     // Animate here 🎬
 
     function animate(time) {
@@ -210,18 +182,32 @@
 
       resizeCanvasToDisplaySize();
 
-      test_box.rotation.x = deg_to_rad(guiControls.rotationX);
-      test_box.rotation.y = deg_to_rad(guiControls.rotationY);
-      test_box.rotation.z = deg_to_rad(guiControls.rotationZ);
-      test_box2.rotation.x = deg_to_rad(guiControls.childrotationX);
-      test_box2.rotation.y = deg_to_rad(guiControls.childrotationY);
-      test_box2.rotation.z = deg_to_rad(guiControls.childrotationZ);
+      if (unit) {
+        dec_axis = unit.getObjectByName("empty_dec", true); // aka head unit
+        ra_axis = unit.getObjectByName("empty_ra", true);
+        lat = unit.getObjectByName("empty_lat", true);
+        mount = unit.getObjectByName("empty_mount", true);
+        pier = unit.getObjectByName("empty_pier", true);
+
+        ra_axis.rotation.x = deg_to_rad(guiControls.RA);
+        dec_axis.rotation.y = deg_to_rad(guiControls.Dec);
+        lat.rotation.z = deg_to_rad(guiControls.Latitude) * -1;
+      }
+
       // mesh.rotation.y = time * 1;
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
+
+      // if (unit && firsttime) {
+      //   console.log(unit.children)
+      //   firsttime = false;
+      // }
     }
 
     requestAnimationFrame(animate);
+
+
+
 
   </script>
 </body>
