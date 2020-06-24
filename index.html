@@ -55,6 +55,7 @@
   <script type="text/javascript" src="js/OrbitControls.js"></script>
   <script type="text/javascript" src="js/GLTFLoader.js"></script>
   <script type="text/javascript" src="js/dat.gui.min.js"></script>
+  <script type="text/javascript" src="js/RGBELoader.js"></script>
 
   <script type="text/javascript">
 
@@ -75,7 +76,7 @@
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true });
     renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set(15, 0, 15);
+    camera.position.set(15, 3, 15);
     // controls = new THREE.PointerLockControls(camera, renderer.domElement);
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 3, 0);
@@ -86,43 +87,43 @@
     // Scene setup 🖼
 
     const scene = new THREE.Scene();
-
     // { scene.fog = new THREE.Fog(0x7ce6d9, 30, 350); }
-
-    var axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
-
-    // var prevTime = performance.now();
-    // var velocity = new THREE.Vector3();
-    // var direction = new THREE.Vector3();
-    // var vertex = new THREE.Vector3();
-    // var color = new THREE.Color();
 
 
     // Lighting 💡
 
-    // const light1 = new THREE.PointLight(0xffffff, 3, 0);
-    // light1.position.set(-100, 100, 30);
-    // scene.add(light1);
+    const light1 = new THREE.PointLight(0xffcfa6, 0.25, 0);
+    light1.position.set(10, 10, 10);
+    scene.add(light1);
 
-    // const light2 = new THREE.PointLight(0xff6200, 0.5, 0);
-    // light2.position.set(100, 100, 30);
-    // scene.add(light2);
-
-
-    const light3 = new THREE.PointLight(0x007bff, 0.75, 0);
-    light3.position.set(10, 10, 10);
-    scene.add(light3);
-
-    const light4 = new THREE.PointLight(0x007bff, 0.75, 0);
-    light4.position.set(-10, 10, -10);
-    scene.add(light4);
+    const light2 = new THREE.PointLight(0xffcfa6, 0.25, 0);
+    light2.position.set(-10, 10, -10);
+    scene.add(light2);
 
     // var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     // scene.add(directionalLight);
 
-    var light = new THREE.AmbientLight(0xf2f8ff, intensity = 0.75);
+    var light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.65);
     scene.add(light);
+
+
+    // HDRI 🌇
+    var pmremGenerator = new THREE.PMREMGenerator(renderer);
+    new THREE.RGBELoader()
+      .setDataType(THREE.UnsignedByteType)
+      .setPath('assets/hdri/')
+      .load('placeholder_sunset.hdr', function (texture) {
+
+        var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+        pmremGenerator.compileCubemapShader();
+
+        // scene.background = envMap;
+        scene.environment = envMap;
+
+        texture.dispose();
+        pmremGenerator.dispose();
+
+      });
 
 
     // Materials 🎨
@@ -131,41 +132,59 @@
 
     // Objects 🔭
 
+    var axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+
     var loader = new THREE.GLTFLoader();
 
-    var unit, mesh;
+    var unit, mesh, clouds;
 
     loader.load('assets/unit.glb', onLoadUnit);
     loader.load('assets/placeholder_sky.glb', onLoad);
     loader.load('assets/placeholder_ground.glb', onLoad);
+    loader.load('assets/placeholder_clouds.glb', onLoadClouds);
 
     function onLoadUnit(gltf) {
-      console.log(gltf);
+      // console.log(gltf);
       unit = gltf.scene;
 
       scene.add(unit);
     }
 
     function onLoad(gltf) {
-      console.log(gltf);
+      // console.log(gltf);
       mesh = gltf.scene;
       // sky.lights = false;
 
       scene.add(mesh);
     }
 
+    function onLoadClouds(gltf) {
+      // console.log(gltf);
+      clouds = gltf.scene;
+      // sky.lights = false;
+
+      scene.add(clouds);
+    }
+
+
+    // Demo input GUI 🕹
 
     var guiControls = new function () {
       this.RA = -40.;
       this.Dec = 95.;
       this.Latitude = 34.;
+      this.Cloudy = false;
+      this.Axes = false;
     }
 
-    // Demo input GUI 🕹
     var gui = new dat.GUI();
     gui.add(guiControls, 'RA', -180, 180);
     gui.add(guiControls, 'Dec', -180, 180);
     gui.add(guiControls, 'Latitude', 0, 90);
+    gui.add(guiControls, 'Cloudy');
+    gui.add(guiControls, 'Axes');
+
 
     // Resize canvas with window ↗️
 
@@ -190,6 +209,8 @@
 
       resizeCanvasToDisplaySize();
 
+      // Animate unit pointing 🔭
+
       if (unit) {
         dec_axis = unit.getObjectByName("empty_dec", true); // aka head unit
         ra_axis = unit.getObjectByName("empty_ra", true);
@@ -200,6 +221,25 @@
         ra_axis.rotation.x = deg_to_rad(guiControls.RA);
         dec_axis.rotation.y = deg_to_rad(guiControls.Dec);
         lat.rotation.z = deg_to_rad(guiControls.Latitude) * -1;
+      }
+
+      // Toggle clouds ☁️
+      if (clouds) {
+        if (guiControls.Cloudy) {
+          clouds.visible = true;
+          clouds.rotation.y += 0.0003;
+        } else {
+          clouds.visible = false;
+        }
+      }
+
+      // Toggle axes ✖️
+      if (axesHelper) {
+        if (guiControls.Axes) {
+          axesHelper.visible = true;
+        } else {
+          axesHelper.visible = false;
+        }
       }
 
       renderer.render(scene, camera);
