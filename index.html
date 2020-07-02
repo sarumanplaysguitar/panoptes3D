@@ -80,14 +80,12 @@
     const sky_fshader = `
     uniform vec2 u_resolution;
     uniform float u_time;
-    uniform vec3 u_color_a;
-    uniform vec3 u_color_b;
-    uniform vec3 u_red;
-    uniform vec3 u_yellow;
-    uniform vec3 u_green;
-    uniform vec3 u_blue;
-    uniform vec3 u_purple;
-    uniform vec3 u_pink;
+    uniform vec3 u_ground;
+    uniform vec3 u_horizon;
+    uniform vec3 u_low1;
+    uniform vec3 u_low2;
+    uniform vec3 u_mid;
+    uniform vec3 u_upper;
     uniform vec3 u_white;
     varying vec2 v_uv;
 
@@ -95,16 +93,15 @@
       // vec2 uv = gl_FragCoord.xy/u_resolution;
       
       // Mix from the ground up.
-      vec3 mix1 = mix(u_red, u_yellow, smoothstep(0.5, 0.55, v_uv.y));
-      vec3 mix2 = mix(mix1, u_green, smoothstep(0.5, 0.65, v_uv.y));
-      vec3 mix3 = mix(mix2, u_blue, smoothstep(0.5, 0.7, v_uv.y));
-      vec3 mix4 = mix(mix3, u_purple, smoothstep(0.5, 0.75, v_uv.y));
-      vec3 mix5 = mix(mix4, u_pink, smoothstep(0.5, 0.9, v_uv.y));
-      vec3 mix6 = mix(mix4, u_pink, smoothstep(0.5, 1., v_uv.y));
+      vec3 mix1 = mix(u_ground, u_horizon, smoothstep(0.5, 0.6, v_uv.y));
+      vec3 mix2 = mix(mix1, u_low1, smoothstep(0.5, 0.7, v_uv.y));
+      vec3 mix3 = mix(mix2, u_low2, smoothstep(0.4, 1.0, v_uv.y));
+      vec3 mix4 = mix(mix3, u_mid, smoothstep(0.5, 1., v_uv.y));
+      vec3 mix5 = mix(mix4, u_upper, smoothstep(0.6, 1., v_uv.y));
+      // vec3 mix6 = mix(mix5, u_mid, smoothstep(0.5, 0.1, v_uv.y));
+      // vec3 mix6 = mix(mix5, u_white, smoothstep(0.7, 1., v_uv.y));
       // vec3 mix6 = vec3(0.0);
 
-      // vec3 color = mix(u_color_a, u_color_b, (v_uv.y-0.5) * 10.);
-      // vec3 color = mix(u_color_a, u_color_b, smoothstep(0.5, 0.55, v_uv.y));
       // vec3 color = vec3(v_uv.x, v_uv.y, 0.0);
       gl_FragColor = vec4(mix5, 1.0);
     }
@@ -151,6 +148,10 @@
     scene.add(light);
 
 
+    // Sun altitude
+
+
+
     // HDRI 🌇
     var pmremGenerator = new THREE.PMREMGenerator(renderer);
     new THREE.RGBELoader()
@@ -172,14 +173,12 @@
 
     // Materials 🎨
     const uniforms = {
-      u_color_a: { value: new THREE.Color(0xff0000) },
-      u_color_b: { value: new THREE.Color(0x0000ff) },
-      u_red: { value: new THREE.Color(0xff0000) },
-      u_yellow: { value: new THREE.Color(0xffff00) },
-      u_green: { value: new THREE.Color(0x00ff00) },
-      u_blue: { value: new THREE.Color(0x0000ff) },
-      u_purple: { value: new THREE.Color(0xaa00ff) },
-      u_pink: { value: new THREE.Color(0xa8e5ff) },
+      u_ground: { value: new THREE.Color(0x5f9df3) },
+      u_horizon: { value: new THREE.Color(0xad9ed6) },
+      u_low1: { value: new THREE.Color(0xe4ffee) },
+      u_low2: { value: new THREE.Color(0x6ccaff) },
+      u_mid: { value: new THREE.Color(0x6ccaff) },
+      u_upper: { value: new THREE.Color(0x557feb) },
       u_white: { value: new THREE.Color(0xffffff) },
       u_time: { value: 0.0 },
       u_resolution: { value: { x: 0, y: 0 } }
@@ -195,7 +194,7 @@
 
     // Objects 🔭
 
-    var sky_geometry = new THREE.SphereGeometry(18.47, 30, 20);
+    var sky_geometry = new THREE.SphereGeometry(18.47, 25, 20);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
     scene.add(sky_test);
 
@@ -208,7 +207,7 @@
 
     loader.load('assets/unit.glb', onLoadUnit);
     // loader.load('assets/placeholder_sky.glb', onLoadSky);
-    loader.load('assets/placeholder_ground.glb', onLoad);
+    // loader.load('assets/placeholder_ground.glb', onLoad);
     loader.load('assets/placeholder_clouds.glb', onLoadClouds);
 
     function onLoadUnit(gltf) {
@@ -252,6 +251,7 @@
       this.RA = -40.;
       this.Dec = 95.;
       this.Latitude = 34.;
+      this.Sun = 60.;
       this.Cloudy = false;
       this.Axes = false;
     }
@@ -260,6 +260,7 @@
     gui.add(guiControls, 'RA', -180, 180);
     gui.add(guiControls, 'Dec', -180, 180);
     gui.add(guiControls, 'Latitude', 0, 90);
+    gui.add(guiControls, 'Sun', -90, 90);
     gui.add(guiControls, 'Cloudy');
     gui.add(guiControls, 'Axes');
 
