@@ -67,6 +67,11 @@
       return deg * pi / 180;
     }
 
+    // Astronomical positions
+    // (get from API later)
+    var sun_altitude = -60.;
+    var prev_sun_altitude = -60.
+
     // Shaders 🔮
     const sky_vshader = `
     varying vec2 v_uv;
@@ -82,8 +87,7 @@
     uniform float u_time;
     uniform vec3 u_ground;
     uniform vec3 u_horizon;
-    uniform vec3 u_low1;
-    uniform vec3 u_low2;
+    uniform vec3 u_low;
     uniform vec3 u_mid;
     uniform vec3 u_upper;
     uniform vec3 u_white;
@@ -93,17 +97,13 @@
       // vec2 uv = gl_FragCoord.xy/u_resolution;
       
       // Mix from the ground up.
-      vec3 mix1 = mix(u_ground, u_horizon, smoothstep(0.5, 0.6, v_uv.y));
-      vec3 mix2 = mix(mix1, u_low1, smoothstep(0.5, 0.7, v_uv.y));
-      vec3 mix3 = mix(mix2, u_low2, smoothstep(0.4, 1.0, v_uv.y));
-      vec3 mix4 = mix(mix3, u_mid, smoothstep(0.5, 1., v_uv.y));
-      vec3 mix5 = mix(mix4, u_upper, smoothstep(0.6, 1., v_uv.y));
-      // vec3 mix6 = mix(mix5, u_mid, smoothstep(0.5, 0.1, v_uv.y));
-      // vec3 mix6 = mix(mix5, u_white, smoothstep(0.7, 1., v_uv.y));
-      // vec3 mix6 = vec3(0.0);
+      vec3 mix1 = mix(u_ground, u_horizon, smoothstep(0.5, 0.55, v_uv.y));
+      vec3 mix2 = mix(mix1, u_low, smoothstep(0.5, 0.65, v_uv.y));
+      vec3 mix3 = mix(mix2, u_mid, smoothstep(0.5, 0.8, v_uv.y));
+      vec3 mix4 = mix(mix3, u_upper, smoothstep(0.7, 1., v_uv.y));
 
       // vec3 color = vec3(v_uv.x, v_uv.y, 0.0);
-      gl_FragColor = vec4(mix5, 1.0);
+      gl_FragColor = vec4(mix4, 1.0);
     }
     `
 
@@ -172,17 +172,151 @@
 
 
     // Materials 🎨
+
+    // sky_colors = new Map();
+
+    // sky_colors.
+
+    // Define from ground to zenith
+    sky_colors = {
+      day: [0x94cbfe, 0xe3fbff, 0xc5efff, 0xb5e7ff, 0x95cbff],
+      green: [0x80bfff, 0xc5eef3, 0x9cdef7, 0x78c1fd, 0x77a8ff],
+      green_golden: [0x5f9df3, 0xad9ed6, 0xe4ffee, 0x6ccaff, 0x5f9df3],
+      // golden: [0x4a49b1, 0xe4d6f2, 0xc49ffa, 0x7078db, 0x5d64c5],
+      golden: [0x32318a, 0xb4b8ff, 0x8f81e5, 0x4f53bb, 0x313b9b],
+      // twilight: [0x32318a, 0xb4b8ff, 0x8f81e5, 0x4f53bb, 0x313b9b],
+      twilight: [0x1d084f, 0x494eaa, 0x484aa7, 0x2a206d, 0x17004a],
+      night: [0x1d084f, 0x4544a2, 0x31287b, 0x251762, 0x17004b],
+      deeper_night: [0x00003f, 0x494eaa, 0x302e6c, 0x0f0e42, 0x050539]
+    };
+
+    // sky_colors = {
+    //   day: [
+    //     new THREE.Color(0x95cbff),
+    //     new THREE.Color(0xb5e7ff),
+    //     new THREE.Color(0xc5efff),
+    //     new THREE.Color(0xe3fbff),
+    //     new THREE.Color(0x94cbfe)
+    //   ],
+    //   green: [
+    //     new THREE.Color(0x77a8ff),
+    //     new THREE.Color(0x78c1fd),
+    //     new THREE.Color(0x9cdef7),
+    //     new THREE.Color(0xc5eef3),
+    //     new THREE.Color(0x80bfff)
+    //   ],
+    //   green_golden: [
+    //     new THREE.Color(0x5f9df3),
+    //     new THREE.Color(0xad9ed6),
+    //     new THREE.Color(0xe4ffee),
+    //     new THREE.Color(0x6ccaff),
+    //     new THREE.Color(0x5f9df3)
+    //   ],
+    //   golden: [
+    //     new THREE.Color(0x7d82e5),
+    //     new THREE.Color(0xd7affd),
+    //     new THREE.Color(0xe4c5fa),
+    //     new THREE.Color(0xe4d6f2),
+    //     new THREE.Color(0x4a49b1)
+    //   ],
+    //   twilight: [
+    //     new THREE.Color(0x313b9b),
+    //     new THREE.Color(0x4f53bb),
+    //     new THREE.Color(0x8f81e5),
+    //     new THREE.Color(0xb4b8ff),
+    //     new THREE.Color(0x32318a)
+    //   ],
+    //   night: [
+    //     new THREE.Color(0x17004a),
+    //     new THREE.Color(0x2a206d),
+    //     new THREE.Color(0x484aa7),
+    //     new THREE.Color(0x494eaa),
+    //     new THREE.Color(0x1d084f)
+    //   ]
+    // };
+
+    sun_thresholds = [90, 50, 25, 10, 5, -10, -90];
+
+    function blend_sky_colors(sun_altitude, sun_thresholds, sky_colors) {
+      // Returns array of linearly interpolated sky colors (one for each degree breakpoint in sun_thresholds)
+      // based on sun's altitude, and blended from a few key, preset sky colors/edge cases (THREE.Color arrays in sky_colors)
+      var sky_color_lerp_array = [];
+      var num_thresholds = sun_thresholds.length;
+      // console.log(sky_colors);
+      var num_colors = sky_colors['day'].length;
+      var sky_colors_keys = Object.keys(sky_colors);
+
+      // Determine what "time of day" it is by seeing which of the 2 thresholds sun_altitude is within
+      for (var i = 0; i < num_thresholds; i++) {
+        if (sun_altitude >= sun_thresholds[i]) {
+          if (sun_altitude == sun_thresholds[i]) {
+            // It's equal to an edge case, so nothing to interpolate - just return pre-made sky colors.
+            // sky_color_lerp_array = sky_colors[sky_colors_keys[i]];
+            for (var j = 0; j < num_colors; j++) {
+              var key_color = new THREE.Color(sky_colors[sky_colors_keys[i]][j]);
+              sky_color_lerp_array.push(key_color);
+            }
+          } else {
+            // Need to interpolate between 2 thresholds, in order of day -> night (or, higher sun altitude -> lower)
+            var upper_threshold = sun_thresholds[i - 1];
+            var lower_threshold = sun_thresholds[i];
+
+            var percent = Math.round(((upper_threshold - sun_altitude) / (upper_threshold - lower_threshold) + 0.00001) * 100) / 100;
+            // console.log(percent, '%', sun_thresholds[i - 1], 'to', sun_thresholds[i], 'for i: ', i);
+
+
+
+            // Create LERP blends of all colors between the two edge case skies
+            for (var j = 0; j < num_colors; j++) {
+              var start_color = new THREE.Color(sky_colors[sky_colors_keys[i - 1]][j]);
+              // Even if this works it's bad and i need to fix it
+              var end_color = new THREE.Color(sky_colors[sky_colors_keys[i]][j]);
+              // console.log("yo", sky_colors[sky_colors_keys[i]][j]);
+
+              var blend_color = start_color.lerpHSL(end_color, percent);
+
+              sky_color_lerp_array.push(blend_color)
+            }
+          }
+        }
+        // if (sky_color_lerp_array.length != 0) console.log(sky_color_lerp_array);
+        if (sky_color_lerp_array.length != 0) break;
+      }
+      return sky_color_lerp_array;
+    }
+
+    // Assign initial sky colors
+    var blended_sky_colors = blend_sky_colors(sun_altitude, sun_thresholds, sky_colors);
+
+    function update_sky_colors(uniforms, new_sky_colors) {
+      uniforms.u_ground = { value: new_sky_colors[0] },
+        uniforms.u_horizon = { value: new_sky_colors[1] },
+        uniforms.u_low = { value: new_sky_colors[2] },
+        uniforms.u_mid = { value: new_sky_colors[3] },
+        uniforms.u_upper = { value: new_sky_colors[4] }
+    }
+
+    // const uniforms = {
+    //   u_ground: { value: new THREE.Color(0xffffff) },
+    //   u_horizon: { value: new THREE.Color(0xffffff) },
+    //   u_low: { value: new THREE.Color(0xffffff) },
+    //   u_mid: { value: new THREE.Color(0xffffff) },
+    //   u_upper: { value: new THREE.Color(0xffffff) },
+    //   u_white: { value: new THREE.Color(0xffffff) },
+    //   u_time: { value: 0.0 },
+    //   u_resolution: { value: { x: 0, y: 0 } }
+    // };
+
     const uniforms = {
-      u_ground: { value: new THREE.Color(0x5f9df3) },
-      u_horizon: { value: new THREE.Color(0xad9ed6) },
-      u_low1: { value: new THREE.Color(0xe4ffee) },
-      u_low2: { value: new THREE.Color(0x6ccaff) },
-      u_mid: { value: new THREE.Color(0x6ccaff) },
-      u_upper: { value: new THREE.Color(0x557feb) },
+      u_ground: { value: blended_sky_colors[0] },
+      u_horizon: { value: blended_sky_colors[1] },
+      u_low: { value: blended_sky_colors[2] },
+      u_mid: { value: blended_sky_colors[3] },
+      u_upper: { value: blended_sky_colors[4] },
       u_white: { value: new THREE.Color(0xffffff) },
       u_time: { value: 0.0 },
       u_resolution: { value: { x: 0, y: 0 } }
-    }
+    };
 
     const sky_material = new THREE.ShaderMaterial({
       uniforms: uniforms,
@@ -194,7 +328,7 @@
 
     // Objects 🔭
 
-    var sky_geometry = new THREE.SphereGeometry(18.47, 25, 20);
+    var sky_geometry = new THREE.SphereGeometry(18.47, 50, 20);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
     scene.add(sky_test);
 
@@ -251,7 +385,7 @@
       this.RA = -40.;
       this.Dec = 95.;
       this.Latitude = 34.;
-      this.Sun = 60.;
+      this.Sun = sun_altitude;
       this.Cloudy = false;
       this.Axes = false;
     }
@@ -267,7 +401,7 @@
 
     // Resize canvas with window ↗️
 
-    function resizeCanvasToDisplaySize() {
+    function resize_canvas_to_display_size() {
       const canvas = renderer.domElement;
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -290,7 +424,7 @@
       time *= 0.001; // convert ms to seconds
       uniforms.u_time.value = time;
 
-      resizeCanvasToDisplaySize();
+      resize_canvas_to_display_size();
 
       // Animate unit pointing 🔭
 
@@ -305,6 +439,18 @@
         dec_axis.rotation.y = deg_to_rad(guiControls.Dec);
         lat.rotation.z = deg_to_rad(guiControls.Latitude) * -1;
       }
+
+      // Update sun position
+      sun_altitude = Math.floor(guiControls.Sun);
+
+      if (sun_altitude != prev_sun_altitude) {
+        // Update sky colors 🌅
+        // Should I only try to do these sorta updates if the sun actually moved a lot (ie. some fraction of a degree)?
+        update_sky_colors(uniforms, blend_sky_colors(sun_altitude, sun_thresholds, sky_colors));
+        // console.log(sun_altitude);
+        prev_sun_altitude = sun_altitude;
+      }
+      // // ...then redraw it + change lighting too
 
       // Toggle clouds ☁️
       if (clouds) {
