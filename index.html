@@ -69,8 +69,8 @@
 
     // Astronomical positions
     // (get from API later)
-    var sun_altitude = -60.;
-    var prev_sun_altitude = -60.
+    var sun_altitude = -10.;
+    var prev_sun_altitude = -10.
 
     // Shaders 🔮
     const sky_vshader = `
@@ -116,8 +116,8 @@
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true });
     renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-    // camera.position.set(15, 3, 15);
-    camera.position.set(50, 3, 50);
+    camera.position.set(15, 3, 15);
+    // camera.position.set(50, 3, 50);
     // controls = new THREE.PointerLockControls(camera, renderer.domElement);
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 3, 0);
@@ -128,24 +128,26 @@
     // Scene setup 🖼
 
     const scene = new THREE.Scene();
-    // { scene.fog = new THREE.Fog(0x7ce6d9, 30, 350); }
+    scene.fog = new THREE.Fog(0x00003f, 0, 150);
+    // scene.fog = new THREE.Fog(0xffffff, 0, 5);
+
 
 
     // Lighting 💡
 
-    const light1 = new THREE.PointLight(0xffcfa6, 0.25, 0);
+    const light1 = new THREE.PointLight(0xffcfa6, 0.3, 0);
     light1.position.set(10, 10, 10);
     scene.add(light1);
 
-    const light2 = new THREE.PointLight(0xffcfa6, 0.25, 0);
+    const light2 = new THREE.PointLight(0xffcfa6, 0.3, 0);
     light2.position.set(-10, 10, -10);
     scene.add(light2);
 
     // var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     // scene.add(directionalLight);
 
-    var light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.65);
-    scene.add(light);
+    var ambient_light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.5);
+    scene.add(ambient_light);
 
 
     // Sun altitude
@@ -179,67 +181,86 @@
 
     // Define from ground to zenith
     sky_colors = {
-      day: [0x94cbfe, 0xe3fbff, 0xc5efff, 0xb5e7ff, 0x95cbff],
-      green: [0x80bfff, 0xc5eef3, 0x9cdef7, 0x78c1fd, 0x77a8ff],
-      green_golden: [0x5f9df3, 0xad9ed6, 0xe4ffee, 0x6ccaff, 0x5f9df3],
-      // golden: [0x4a49b1, 0xe4d6f2, 0xc49ffa, 0x7078db, 0x5d64c5],
-      golden: [0x32318a, 0xb4b8ff, 0x8f81e5, 0x4f53bb, 0x313b9b],
-      // twilight: [0x32318a, 0xb4b8ff, 0x8f81e5, 0x4f53bb, 0x313b9b],
-      twilight: [0x1d084f, 0x494eaa, 0x484aa7, 0x2a206d, 0x17004a],
-      night: [0x1d084f, 0x4544a2, 0x31287b, 0x251762, 0x17004b],
-      deeper_night: [0x00003f, 0x494eaa, 0x302e6c, 0x0f0e42, 0x050539]
+      day: [
+        0x94cbfe,
+        0xe3fbff,
+        0xc5efff,
+        0xb5e7ff,
+        0x95cbff
+      ],
+      green: [
+        0x80bfff,
+        0xc5eef3,
+        0x9cdef7,
+        0x78c1fd,
+        0x77a8ff
+      ],
+      green_golden: [
+        0x5f9df3,
+        0xad9ed6,
+        0xe4ffee,
+        0x6ccaff,
+        0x5f9df3
+      ],
+      // golden: [
+      //   0x4a49b1,
+      //   0xe4d6f2,
+      //   0xc49ffa,
+      //   0x7078db,
+      //   0x5d64c5
+      // ],
+      golden: [
+        0x4c61d1,
+        0xcfbee8,
+        0xbad5fd,
+        0x5c76da,
+        0x5c76da
+      ],
+      twilight: [
+        0x27247b,
+        0x7060ae,
+        0x5659a2,
+        0x2c368a,
+        0x2a277d
+      ],
+      // twilight: [
+      //   0x1d084f,
+      //   0x5744a2,
+      //   0x31287b,
+      //   0x251762,
+      //   0x17004b
+      // ],
+      night: [
+        0x00003f,
+        0x31287b,
+        0x050539,
+        0x050539,
+        0x050539
+      ],
+      deep_night: [
+        0x00003f,
+        0x31287b,
+        0x050539,
+        0x050539,
+        0x050539
+      ]
     };
 
-    // sky_colors = {
-    //   day: [
-    //     new THREE.Color(0x95cbff),
-    //     new THREE.Color(0xb5e7ff),
-    //     new THREE.Color(0xc5efff),
-    //     new THREE.Color(0xe3fbff),
-    //     new THREE.Color(0x94cbfe)
-    //   ],
-    //   green: [
-    //     new THREE.Color(0x77a8ff),
-    //     new THREE.Color(0x78c1fd),
-    //     new THREE.Color(0x9cdef7),
-    //     new THREE.Color(0xc5eef3),
-    //     new THREE.Color(0x80bfff)
-    //   ],
-    //   green_golden: [
-    //     new THREE.Color(0x5f9df3),
-    //     new THREE.Color(0xad9ed6),
-    //     new THREE.Color(0xe4ffee),
-    //     new THREE.Color(0x6ccaff),
-    //     new THREE.Color(0x5f9df3)
-    //   ],
-    //   golden: [
-    //     new THREE.Color(0x7d82e5),
-    //     new THREE.Color(0xd7affd),
-    //     new THREE.Color(0xe4c5fa),
-    //     new THREE.Color(0xe4d6f2),
-    //     new THREE.Color(0x4a49b1)
-    //   ],
-    //   twilight: [
-    //     new THREE.Color(0x313b9b),
-    //     new THREE.Color(0x4f53bb),
-    //     new THREE.Color(0x8f81e5),
-    //     new THREE.Color(0xb4b8ff),
-    //     new THREE.Color(0x32318a)
-    //   ],
-    //   night: [
-    //     new THREE.Color(0x17004a),
-    //     new THREE.Color(0x2a206d),
-    //     new THREE.Color(0x484aa7),
-    //     new THREE.Color(0x494eaa),
-    //     new THREE.Color(0x1d084f)
-    //   ]
-    // };
+    ambient_light_colors = {
+      day: 0xa6a9ff,
+      green: 0xa6a9ff,
+      green_golden: 0xa6a9ff,
+      golden: 0xd7a6ff,
+      twilight: 0xbfa6ff,
+      night: 0x6947bf,
+      deep_night: 0x6947bf
+    }
 
-    sun_thresholds = [90, 50, 25, 10, 5, -10, -90];
+    sun_thresholds = [90, 50, -5, -10, -13, -18, -90];
 
     function blend_sky_colors(sun_altitude, sun_thresholds, sky_colors) {
       // Returns array of linearly interpolated sky colors (one for each degree breakpoint in sun_thresholds)
-      // based on sun's altitude, and blended from a few key, preset sky colors/edge cases (THREE.Color arrays in sky_colors)
+      // based on sun's altitude, and blended from a few key, preset sky colors/edge cases (hex codes in sky_colors)
       var sky_color_lerp_array = [];
       var num_thresholds = sun_thresholds.length;
       // console.log(sky_colors);
@@ -249,12 +270,20 @@
       // Determine what "time of day" it is by seeing which of the 2 thresholds sun_altitude is within
       for (var i = 0; i < num_thresholds; i++) {
         if (sun_altitude >= sun_thresholds[i]) {
+
+          // ambient_light.color.set(ambient_light_colors[sky_colors_keys[i]]);
+          // console.log(ambient_light_colors[i]);
+
           if (sun_altitude == sun_thresholds[i]) {
             // It's equal to an edge case, so nothing to interpolate - just return pre-made sky colors.
             // sky_color_lerp_array = sky_colors[sky_colors_keys[i]];
             for (var j = 0; j < num_colors; j++) {
               var key_color = new THREE.Color(sky_colors[sky_colors_keys[i]][j]);
               sky_color_lerp_array.push(key_color);
+
+              // Update fog color if color calculated was ground (first entry in color table)
+              if (j == 0) scene.fog.color = key_color;
+              if (j == 0) ambient_light.color.set(key_color);
             }
           } else {
             // Need to interpolate between 2 thresholds, in order of day -> night (or, higher sun altitude -> lower)
@@ -276,10 +305,14 @@
               var blend_color = start_color.lerpHSL(end_color, percent);
 
               sky_color_lerp_array.push(blend_color)
+
+              // Update fog color if color calculated was ground (first entry in color table)
+              if (j == 0) scene.fog.color = blend_color;
+              if (j == 0) ambient_light.color.set(blend_color);
             }
           }
         }
-        // if (sky_color_lerp_array.length != 0) console.log(sky_color_lerp_array);
+        if (sky_color_lerp_array.length != 0) console.log(sky_color_lerp_array);
         if (sky_color_lerp_array.length != 0) break;
       }
       return sky_color_lerp_array;
@@ -296,17 +329,6 @@
         uniforms.u_upper = { value: new_sky_colors[4] }
     }
 
-    // const uniforms = {
-    //   u_ground: { value: new THREE.Color(0xffffff) },
-    //   u_horizon: { value: new THREE.Color(0xffffff) },
-    //   u_low: { value: new THREE.Color(0xffffff) },
-    //   u_mid: { value: new THREE.Color(0xffffff) },
-    //   u_upper: { value: new THREE.Color(0xffffff) },
-    //   u_white: { value: new THREE.Color(0xffffff) },
-    //   u_time: { value: 0.0 },
-    //   u_resolution: { value: { x: 0, y: 0 } }
-    // };
-
     const uniforms = {
       u_ground: { value: blended_sky_colors[0] },
       u_horizon: { value: blended_sky_colors[1] },
@@ -322,11 +344,18 @@
       uniforms: uniforms,
       vertexShader: sky_vshader,
       fragmentShader: sky_fshader,
-      side: THREE.BackSide
+      side: THREE.BackSide,
+      fog: false
     });
 
+    const ground_material = new THREE.ShaderMaterial({
+
+    })
 
     // Objects 🔭
+
+    var ground_geometry = new THREE.Plane(20);
+    var ground_test = new THREE.Mesh(ground_geometry, ground_material);
 
     var sky_geometry = new THREE.SphereGeometry(18.47, 50, 20);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
