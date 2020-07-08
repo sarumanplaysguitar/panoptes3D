@@ -93,7 +93,7 @@
     uniform vec3 u_white;
     varying vec2 v_uv;
 
-    void main (void) {
+    void main(void) {
       // vec2 uv = gl_FragCoord.xy/u_resolution;
       
       // Mix from the ground up.
@@ -104,6 +104,38 @@
 
       // vec3 color = vec3(v_uv.x, v_uv.y, 0.0);
       gl_FragColor = vec4(mix4, 1.0);
+    }
+    `
+
+    const ground_vshader = `
+    varying vec2 v_uv;
+
+    void main() {
+      v_uv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+    `
+
+    const ground_fshader = `
+    uniform vec2 u_resolution;
+    uniform vec3 u_ground_glow;
+    varying vec2 v_uv;
+
+    // Make opacity falloff as function of distance
+    // Plane should be a solid color
+
+    void main(void) {
+      vec2 coords = v_uv - 0.5;
+      vec3 color = u_ground_glow;
+      float d = length(coords);
+
+      // float t = 0.4;
+      // float falloff = clamp(d, 0.0, t);
+      // gl_FragColor = vec4(vec3(color), (t - falloff) * 2.);
+
+      float falloff = 1.0 - smoothstep(0.0, 0.4, d);
+
+      gl_FragColor = vec4(color, falloff);
     }
     `
 
@@ -175,74 +207,81 @@
 
     // Materials 🎨
 
-    // sky_colors = new Map();
-
-    // sky_colors.
-
-    // Define from ground to zenith
+    // Define from ground to zenith, to floor/ground highlight at last position
+    // TODO: reorganize these later from zenith -> ground, and either bundle light + floor data in
+    // with this, or separate all 3 of them
     sky_colors = {
       day: [
         0x94cbfe,
         0xe3fbff,
         0xc5efff,
         0xb5e7ff,
-        0x95cbff
+        0x95cbff,
+        0xb5e7ff
       ],
       green: [
         0x80bfff,
         0xc5eef3,
         0x9cdef7,
         0x78c1fd,
-        0x77a8ff
+        0x77a8ff,
+        0x9addfc
       ],
       green_golden: [
         0x5f9df3,
         0xad9ed6,
         0xe4ffee,
         0x6ccaff,
-        0x5f9df3
+        0x5f9df3,
+        0x7abfff
       ],
       // golden: [
       //   0x4a49b1,
       //   0xe4d6f2,
       //   0xc49ffa,
       //   0x7078db,
-      //   0x5d64c5
+      //   0x5d64c5,
+      //   0x563fb0
       // ],
       golden: [
         0x4c61d1,
         0xcfbee8,
         0xbad5fd,
         0x5c76da,
-        0x5c76da
+        0x5c76da,
+        0x6f84e3
       ],
       twilight: [
         0x27247b,
         0x7060ae,
         0x5659a2,
         0x2c368a,
-        0x2a277d
+        0x2a277d,
+        0x36419c
       ],
       // twilight: [
       //   0x1d084f,
       //   0x5744a2,
       //   0x31287b,
       //   0x251762,
-      //   0x17004b
+      //   0x17004b,
+      //   0x31287b
       // ],
       night: [
         0x00003f,
-        0x31287b,
+        0x101063,
+        0x0a0a4f,
         0x050539,
         0x050539,
-        0x050539
+        0x0b0b52
       ],
       deep_night: [
         0x00003f,
-        0x31287b,
+        0x101063,
+        0x0a0a4f,
         0x050539,
         0x050539,
-        0x050539
+        0x0b0b52
       ]
     };
 
@@ -268,7 +307,7 @@
       var sky_colors_keys = Object.keys(sky_colors);
 
       // Determine what "time of day" it is by seeing which of the 2 thresholds sun_altitude is within
-      for (var i = 0; i < num_thresholds; i++) {
+      for (let i = 0; i < num_thresholds; i++) {
         if (sun_altitude >= sun_thresholds[i]) {
 
           // ambient_light.color.set(ambient_light_colors[sky_colors_keys[i]]);
@@ -277,7 +316,7 @@
           if (sun_altitude == sun_thresholds[i]) {
             // It's equal to an edge case, so nothing to interpolate - just return pre-made sky colors.
             // sky_color_lerp_array = sky_colors[sky_colors_keys[i]];
-            for (var j = 0; j < num_colors; j++) {
+            for (let j = 0; j < num_colors; j++) {
               var key_color = new THREE.Color(sky_colors[sky_colors_keys[i]][j]);
               sky_color_lerp_array.push(key_color);
 
@@ -296,7 +335,7 @@
 
 
             // Create LERP blends of all colors between the two edge case skies
-            for (var j = 0; j < num_colors; j++) {
+            for (let j = 0; j < num_colors; j++) {
               var start_color = new THREE.Color(sky_colors[sky_colors_keys[i - 1]][j]);
               // Even if this works it's bad and i need to fix it
               var end_color = new THREE.Color(sky_colors[sky_colors_keys[i]][j]);
@@ -312,7 +351,7 @@
             }
           }
         }
-        if (sky_color_lerp_array.length != 0) console.log(sky_color_lerp_array);
+        // if (sky_color_lerp_array.length != 0) console.log(sky_color_lerp_array);
         if (sky_color_lerp_array.length != 0) break;
       }
       return sky_color_lerp_array;
@@ -321,15 +360,16 @@
     // Assign initial sky colors
     var blended_sky_colors = blend_sky_colors(sun_altitude, sun_thresholds, sky_colors);
 
-    function update_sky_colors(uniforms, new_sky_colors) {
-      uniforms.u_ground = { value: new_sky_colors[0] },
-        uniforms.u_horizon = { value: new_sky_colors[1] },
-        uniforms.u_low = { value: new_sky_colors[2] },
-        uniforms.u_mid = { value: new_sky_colors[3] },
-        uniforms.u_upper = { value: new_sky_colors[4] }
+    function update_colors(sky_uniforms, ground_uniforms, new_sky_colors) {
+      sky_uniforms.u_ground = { value: new_sky_colors[0] },
+        sky_uniforms.u_horizon = { value: new_sky_colors[1] },
+        sky_uniforms.u_low = { value: new_sky_colors[2] },
+        sky_uniforms.u_mid = { value: new_sky_colors[3] },
+        sky_uniforms.u_upper = { value: new_sky_colors[4] },
+        ground_uniforms.u_ground_glow = { value: new_sky_colors[5] }
     }
 
-    const uniforms = {
+    const sky_uniforms = {
       u_ground: { value: blended_sky_colors[0] },
       u_horizon: { value: blended_sky_colors[1] },
       u_low: { value: blended_sky_colors[2] },
@@ -340,8 +380,13 @@
       u_resolution: { value: { x: 0, y: 0 } }
     };
 
+    const ground_uniforms = {
+      u_ground_glow: { value: blended_sky_colors[5] },
+      u_resolution: { value: { x: 0, y: 0 } }
+    };
+
     const sky_material = new THREE.ShaderMaterial({
-      uniforms: uniforms,
+      uniforms: sky_uniforms,
       vertexShader: sky_vshader,
       fragmentShader: sky_fshader,
       side: THREE.BackSide,
@@ -349,13 +394,19 @@
     });
 
     const ground_material = new THREE.ShaderMaterial({
-
-    })
+      uniforms: ground_uniforms,
+      vertexShader: ground_vshader,
+      fragmentShader: ground_fshader,
+      fog: false,
+      transparent: true
+    });
 
     // Objects 🔭
-
-    var ground_geometry = new THREE.Plane(20);
+    var ground_geometry = new THREE.PlaneBufferGeometry(37, 37, 1, 1);
     var ground_test = new THREE.Mesh(ground_geometry, ground_material);
+    ground_test.rotateX(-pi / 2);
+
+    scene.add(ground_test);
 
     var sky_geometry = new THREE.SphereGeometry(18.47, 50, 20);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
@@ -440,8 +491,10 @@
         renderer.setSize(width, height, false);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        uniforms.u_resolution.value.x = width;
-        uniforms.u_resolution.value.y = height;
+        sky_uniforms.u_resolution.value.x = width;
+        sky_uniforms.u_resolution.value.y = height;
+        ground_uniforms.u_resolution.value.x = width;
+        ground_uniforms.u_resolution.value.y = height;
       }
     }
 
@@ -451,7 +504,7 @@
     function animate(time) {
       var time = performance.now();
       time *= 0.001; // convert ms to seconds
-      uniforms.u_time.value = time;
+      sky_uniforms.u_time.value = time;
 
       resize_canvas_to_display_size();
 
@@ -470,14 +523,16 @@
       }
 
       // Update sun position
-      sun_altitude = Math.floor(guiControls.Sun);
+      sun_altitude = Math.floor(guiControls.Sun * 1000) / 1000;
+
 
       if (sun_altitude != prev_sun_altitude) {
         // Update sky colors 🌅
         // Should I only try to do these sorta updates if the sun actually moved a lot (ie. some fraction of a degree)?
-        update_sky_colors(uniforms, blend_sky_colors(sun_altitude, sun_thresholds, sky_colors));
+        update_colors(sky_uniforms, ground_uniforms, blend_sky_colors(sun_altitude, sun_thresholds, sky_colors));
         // console.log(sun_altitude);
         prev_sun_altitude = sun_altitude;
+        console.log(sun_altitude);
       }
       // // ...then redraw it + change lighting too
 
