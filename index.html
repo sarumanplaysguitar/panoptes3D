@@ -56,6 +56,7 @@
   <script type="text/javascript" src="js/GLTFLoader.js"></script>
   <script type="text/javascript" src="js/dat.gui.min.js"></script>
   <script type="text/javascript" src="js/RGBELoader.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"></script>
 
   <script type="text/javascript">
 
@@ -141,7 +142,10 @@
 
     // FPS stats (by mrdoob) 📊
 
-    javascript: (function () { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = 'https://mrdoob.github.io/stats.js/build/stats.min.js'; document.head.appendChild(script); })()
+    var stats = new Stats();
+    document.body.appendChild(stats.dom);
+    requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) });
+
 
     // Camera settings 🎥
 
