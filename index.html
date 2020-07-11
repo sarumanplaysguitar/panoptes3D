@@ -75,7 +75,60 @@
 
     // Shaders 🔮
     const sky_vshader = `
+    // varying vec2 v_uv;
+    varying vec3 final_mix;
+    uniform vec3 u_ground;
+    uniform vec3 u_horizon;
+    uniform vec3 u_low;
+    uniform vec3 u_mid;
+    uniform vec3 u_upper;
+    uniform vec3 u_white;
+    // varying vec2 v_uv;
+
+    void main() {
+      // v_uv = uv;
+
+      // Mix from the ground up.
+      vec3 mix1 = mix(u_ground, u_horizon, smoothstep(0.5, 0.55, uv.y));
+      vec3 mix2 = mix(mix1, u_low, smoothstep(0.5, 0.65, uv.y));
+      vec3 mix3 = mix(mix2, u_mid, smoothstep(0.5, 0.8, uv.y));
+      vec3 mix4 = mix(mix3, u_upper, smoothstep(0.7, 1., uv.y));
+
+      final_mix = mix4;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+    `
+
+    const sky_fshader = `
+    varying vec3 final_mix;
+    // uniform vec2 u_resolution;
+    // uniform float u_time;
+    uniform vec3 u_ground;
+    uniform vec3 u_horizon;
+    uniform vec3 u_low;
+    uniform vec3 u_mid;
+    uniform vec3 u_upper;
+    uniform vec3 u_white;
+    // varying vec2 v_uv;
+
+    void main(void) {
+      // vec2 uv = gl_FragCoord.xy/u_resolution;
+      
+      // // Mix from the ground up.
+      // vec3 mix1 = mix(u_ground, u_horizon, smoothstep(0.5, 0.55, v_uv.y));
+      // vec3 mix2 = mix(mix1, u_low, smoothstep(0.5, 0.65, v_uv.y));
+      // vec3 mix3 = mix(mix2, u_mid, smoothstep(0.5, 0.8, v_uv.y));
+      // vec3 mix4 = mix(mix3, u_upper, smoothstep(0.7, 1., v_uv.y));
+
+      // vec3 color = vec3(v_uv.x, v_uv.y, 0.0);
+      gl_FragColor = vec4(final_mix, 1.0);
+    }
+    `
+
+    const sky_vshader_v1 = `
     varying vec2 v_uv;
+    uniform 
 
     void main() {
       v_uv = uv;
@@ -83,7 +136,7 @@
     }
     `
 
-    const sky_fshader = `
+    const sky_fshader_v1 = `
     uniform vec2 u_resolution;
     uniform float u_time;
     uniform vec3 u_ground;
@@ -412,7 +465,7 @@
 
     scene.add(ground_test);
 
-    var sky_geometry = new THREE.SphereBufferGeometry(18.47, 50, 20);
+    var sky_geometry = new THREE.SphereBufferGeometry(18.47, 50, 26);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
     scene.add(sky_test);
 
