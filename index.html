@@ -405,7 +405,7 @@
     // var spherical = new THREE.Spherical();
     // var ra, dec;
     for (let i = 0; i < 500; i++) {
-      if (i == 0) alert(position, typeof (position), position[0])
+
       // for (let i = 0; i < 500; i++) {
       // ra = deg_to_rad(stars_arr[i][0]);
       // dec = deg_to_rad(stars_arr[i][1]);
@@ -413,6 +413,7 @@
       // position.setFromSpherical(spherical);
 
       position = stars_arr[i];
+      if (i == 0) alert(position + typeof (position) + position[0])
 
       // x, y, z
       vertices.push(position[0]);
