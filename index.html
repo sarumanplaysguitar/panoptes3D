@@ -57,6 +57,7 @@
   <script type="text/javascript" src="js/dat.gui.min.js"></script>
   <script type="text/javascript" src="js/RGBELoader.js"></script>
   <script type="text/javascript" src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"></script>
+  <script type="text/javascript" src="data/mag_5_stars.js"></script>
 
   <script type="text/javascript">
 
@@ -68,12 +69,20 @@
       return deg * pi / 180;
     }
 
-    // Astronomical positions
+    // Astronomical positions and data 🌙
     // (get from API later)
     var sun_altitude = -10.;
     var prev_sun_altitude = -10.
+    // stars data was imported from data/mag_5_stars.js in stars_arr
+    console.log(stars_arr)
+
 
     // Shaders 🔮
+
+    const stars_vshader = ``
+
+    const stars_fshader = ``
+
     const sky_vshader = `
     varying vec3 final_mix;
     uniform vec3 u_ground;
@@ -239,14 +248,6 @@
         0x5f9df3,
         0x7abfff
       ],
-      // golden: [
-      //   0x4a49b1,
-      //   0xe4d6f2,
-      //   0xc49ffa,
-      //   0x7078db,
-      //   0x5d64c5,
-      //   0x563fb0
-      // ],
       golden: [
         0x4c61d1,
         0xcfbee8,
@@ -263,14 +264,6 @@
         0x2a277d,
         0x36419c
       ],
-      // twilight: [
-      //   0x1d084f,
-      //   0x5744a2,
-      //   0x31287b,
-      //   0x251762,
-      //   0x17004b,
-      //   0x31287b
-      // ],
       night: [
         0x00003f,
         0x101063,
