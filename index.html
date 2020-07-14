@@ -154,7 +154,7 @@
 
     // Camera settings 🎥
 
-    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true, precision: "mediump" });
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "mediump" });
     renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.set(15, 3, 15);
@@ -399,6 +399,43 @@
     });
 
     // Objects 🔭
+    var stars_geometry = new THREE.BufferGeometry();
+    var vertices = [];
+    var position;
+    // var spherical = new THREE.Spherical();
+    // var ra, dec;
+    for (let i = 0; i < stars_arr.length; i++) {
+      // for (let i = 0; i < 500; i++) {
+      // ra = deg_to_rad(stars_arr[i][0]);
+      // dec = deg_to_rad(stars_arr[i][1]);
+      // spherical.set(20., dec, ra);
+      // position.setFromSpherical(spherical);
+
+      position = stars_arr[i];
+
+      // x, y, z
+      vertices.push(position[0]);
+      vertices.push(position[1]);
+      vertices.push(position[2]);
+
+      // vertices.push(THREE.MathUtils.randFloatSpread(20)); // x
+      // vertices.push(THREE.MathUtils.randFloatSpread(20)); // y
+      // vertices.push(THREE.MathUtils.randFloatSpread(20)); // z
+      // var position = new THREE.Vector3(0, 0, 0);
+
+      // console.log(position);
+      // console.log(stars_arr[i][0]);
+      // console.log(stars_arr[i][1]);
+    }
+
+    // console.log(vertices);
+
+    stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+    var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, fog: false }));
+    scene.add(stars);
+    // stars.rotation.x = deg_to_rad(90 - 34.)
+
     var ground_geometry = new THREE.PlaneBufferGeometry(37, 37, 1, 1);
     var ground_test = new THREE.Mesh(ground_geometry, ground_material);
     ground_test.rotateX(-pi / 2);
@@ -522,6 +559,8 @@
       // Update sun position
       sun_altitude = Math.floor(guiControls.Sun * 1000) / 1000;
 
+      // stars.rotation.y = 0.00007 * time;
+
 
       if (sun_altitude != prev_sun_altitude) {
         // Update sky colors 🌅
@@ -537,7 +576,7 @@
       if (clouds) {
         if (guiControls.Cloudy) {
           clouds.visible = true;
-          clouds.rotation.y += 0.0003;
+          clouds.rotation.y += 0.000001;
         } else {
           clouds.visible = false;
         }
