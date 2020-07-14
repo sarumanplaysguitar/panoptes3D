@@ -154,7 +154,7 @@
 
     // Camera settings 🎥
 
-    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true, precision: "highp" });
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true, precision: "mediump" });
     renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.set(15, 3, 15);
@@ -404,16 +404,9 @@
     var position;
     // var spherical = new THREE.Spherical();
     // var ra, dec;
-    for (let i = 0; i < 500; i++) {
-
-      // for (let i = 0; i < 500; i++) {
-      // ra = deg_to_rad(stars_arr[i][0]);
-      // dec = deg_to_rad(stars_arr[i][1]);
-      // spherical.set(20., dec, ra);
-      // position.setFromSpherical(spherical);
-
+    for (let i = 0; i < stars_arr.length; i++) {
       position = stars_arr[i];
-      if (i == 0) alert(position + typeof (position) + position[0])
+      // if (i == 0) alert(position + typeof (position) + position[0])
 
       // x, y, z
       vertices.push(position[0]);
