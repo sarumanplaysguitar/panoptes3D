@@ -184,9 +184,9 @@
     light1.position.set(10, 10, 10);
     scene.add(light1);
 
-    const light2 = new THREE.PointLight(0xffcfa6, 0.3, 0);
-    light2.position.set(-10, 10, -10);
-    scene.add(light2);
+    // const light2 = new THREE.PointLight(0xffcfa6, 0.3, 0);
+    // light2.position.set(-10, 10, -10);
+    // scene.add(light2);
 
     // var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     // scene.add(directionalLight);
@@ -405,6 +405,7 @@
     // var spherical = new THREE.Spherical();
     // var ra, dec;
     for (let i = 0; i < 500; i++) {
+      if (i == 0) alert(position, typeof (position), position[0])
       // for (let i = 0; i < 500; i++) {
       // ra = deg_to_rad(stars_arr[i][0]);
       // dec = deg_to_rad(stars_arr[i][1]);
