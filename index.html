@@ -399,36 +399,22 @@
     });
 
     // Objects 🔭
-    var stars_geometry = new THREE.BufferGeometry();
-    var vertices = [];
-    var position;
-    // var spherical = new THREE.Spherical();
-    // var ra, dec;
-    for (let i = 0; i < stars_arr.length; i++) {
-      position = stars_arr[i];
-      // if (i == 0) alert(position + typeof (position) + position[0])
+    // var stars_geometry = new THREE.BufferGeometry();
+    // var vertices = [];
+    // var position;
 
-      // x, y, z
-      vertices.push(position[0]);
-      vertices.push(position[1]);
-      vertices.push(position[2]);
+    // for (let i = 0; i < stars_arr.length; i++) {
+    //   position = stars_arr[i];
+    //   // x, y, z
+    //   vertices.push(position[0]);
+    //   vertices.push(position[1]);
+    //   vertices.push(position[2]);
+    // }
 
-      // vertices.push(THREE.MathUtils.randFloatSpread(20)); // x
-      // vertices.push(THREE.MathUtils.randFloatSpread(20)); // y
-      // vertices.push(THREE.MathUtils.randFloatSpread(20)); // z
-      // var position = new THREE.Vector3(0, 0, 0);
+    // stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-      // console.log(position);
-      // console.log(stars_arr[i][0]);
-      // console.log(stars_arr[i][1]);
-    }
-
-    // console.log(vertices);
-
-    stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-    var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, fog: false }));
-    scene.add(stars);
+    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, fog: false }));
+    // scene.add(stars);
     // stars.rotation.x = deg_to_rad(90 - 34.)
 
     var ground_geometry = new THREE.PlaneBufferGeometry(37, 37, 1, 1);
