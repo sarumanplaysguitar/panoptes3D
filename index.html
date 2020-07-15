@@ -57,7 +57,7 @@
   <script type="text/javascript" src="js/dat.gui.min.js"></script>
   <script type="text/javascript" src="js/RGBELoader.js"></script>
   <script type="text/javascript" src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"></script>
-  <script type="text/javascript" src="data/mag_5_stars.js"></script>
+  <script type="text/javascript" src="data/mag_5_stars_copy.js"></script>
 
   <script type="text/javascript">
 
@@ -154,7 +154,7 @@
 
     // Camera settings 🎥
 
-    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "mediump", powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "mediump" });
     renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 35);
     camera.position.set(3, 0.6, 3);
@@ -421,6 +421,7 @@
 
     var ground_geometry = new THREE.PlaneBufferGeometry(7.4, 7.4, 1, 1);
     var ground_test = new THREE.Mesh(ground_geometry, ground_material);
+    ground_test.position.y = -0.01;
     ground_test.rotateX(-pi / 2);
     scene.add(ground_test);
 
