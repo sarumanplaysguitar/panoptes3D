@@ -79,9 +79,27 @@
 
     // Shaders 🔮
 
-    const stars_vshader = ``
+    const stars_vshader = `
+    attribute float size;
+    // varying vec3 vColor;
 
-    const stars_fshader = ``
+    void main() {
+      // vColor = color;
+      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = size;
+      // gl_PointSize = size * (1000. / -mvPosition.z);
+      gl_Position = projectionMatrix * mvPosition;
+    }
+    `
+
+    const stars_fshader = `
+    // varying vec3 vColor;
+
+    void main() {
+      // gl_FragColor = vec4(vColor, 1.0);
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+    `
 
     const sky_vshader = `
     varying vec3 final_mix;
@@ -154,7 +172,7 @@
 
     // Camera settings 🎥
 
-    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "mediump" });
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "highp" });
     renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40);
     camera.position.set(3, 0.6, 3);
@@ -224,7 +242,7 @@
     // Define from ground to zenith, to floor/ground highlight at last position
     // TODO: reorganize these later from zenith -> ground, and either bundle light + floor data in
     // with this, or separate all 3 of them
-    sky_colors = {
+    const sky_colors = {
       day: [
         0x94cbfe,
         0xe3fbff,
@@ -283,7 +301,7 @@
       ]
     };
 
-    ambient_light_colors = {
+    const ambient_light_colors = {
       day: 0xa6a9ff,
       green: 0xa6a9ff,
       green_golden: 0xa6a9ff,
@@ -293,7 +311,7 @@
       deep_night: 0x6947bf
     }
 
-    sun_thresholds = [90, 50, -5, -10, -13, -18, -90];
+    const sun_thresholds = [90, 50, -5, -10, -13, -18, -90];
 
     function blend_sky_colors(sun_altitude, sun_thresholds, sky_colors) {
       // Returns array of linearly interpolated sky colors (one for each degree breakpoint in sun_thresholds)
@@ -399,23 +417,50 @@
       transparent: true
     });
 
+    const stars_uniforms = {
+      u_resolution: { value: { x: 0, y: 0 } }
+    }
+
+    const stars_material = new THREE.ShaderMaterial({
+      uniforms: stars_uniforms,
+      vertexShader: stars_vshader,
+      fragmentShader: stars_fshader,
+      // vertexColors: true;
+    })
+
     // Objects 🔭
     var stars_geometry = new THREE.BufferGeometry();
-    var vertices = [];
+    // var vertices = [];
     var position;
+
+    var star_positions = [];
+    var star_colors = [];
+    var star_sizes = [];
+    var star_mag;
+
+    var star_color = new THREE.Color();
 
     for (let i = 0; i < stars_arr.length; i++) {
       position = stars_arr[i];
       // if (i == 0) alert(position);
-      // x, y, z
-      vertices.push(position[0]);
-      vertices.push(position[1]);
-      vertices.push(position[2]);
+
+      // vertex position: x, y, z
+      star_positions.push(position[0]);
+      star_positions.push(position[1]);
+      star_positions.push(position[2]);
+
+      // size (depends on visual mag, which can range from ~ -1 to 8)
+      star_mag = position[4];
+      size = (8. - star_mag ^ 3) * 0.15;
+      star_sizes.push(size)
     }
 
-    stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(star_positions, 3));
+    // stars_geometry.setAttribute('color', )
+    stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(star_sizes, 1).setUsage(THREE.DynamicDrawUsage));
 
-    var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    var stars = new THREE.Points(stars_geometry, stars_material);
     scene.add(stars);
     // stars.rotation.x = deg_to_rad(90 - 34.)
 
