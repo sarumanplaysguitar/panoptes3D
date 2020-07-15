@@ -154,17 +154,17 @@
 
     // Camera settings 🎥
 
-    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true, precision: "mediump", powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "mediump", powerPreference: "high-performance" });
     renderer.outputEncoding = THREE.sRGBEncoding;
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 200);
-    camera.position.set(15, 3, 15);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 35);
+    camera.position.set(3, 0.6, 3);
     // camera.position.set(50, 3, 50);
     // controls = new THREE.PointerLockControls(camera, renderer.domElement);
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 3, 0);
+    controls.target.set(0, 0.5, 0);
     controls.enablePan = false;
-    controls.minDistance = 1;
-    controls.maxDistance = 150;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 30;
     controls.enableDamping = true;
     controls.dampingFactor = 0.15;
     controls.update();
@@ -173,7 +173,8 @@
     // Scene setup 🖼
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x00003f, 0, 150);
+    scene.fog = new THREE.Fog(0x00003f, 0, 20);
+    scene.background = new THREE.Color(0x3A3A3A);
     // scene.fog = new THREE.Fog(0xffffff, 0, 5);
 
 
@@ -399,30 +400,30 @@
     });
 
     // Objects 🔭
-    // var stars_geometry = new THREE.BufferGeometry();
-    // var vertices = [];
-    // var position;
+    var stars_geometry = new THREE.BufferGeometry();
+    var vertices = [];
+    var position;
 
-    // for (let i = 0; i < stars_arr.length; i++) {
-    //   position = stars_arr[i];
-    //   // x, y, z
-    //   vertices.push(position[0]);
-    //   vertices.push(position[1]);
-    //   vertices.push(position[2]);
-    // }
+    for (let i = 0; i < stars_arr.length; i++) {
+      position = stars_arr[i];
+      // x, y, z
+      vertices.push(position[0]);
+      vertices.push(position[1]);
+      vertices.push(position[2]);
+    }
 
-    // stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, fog: false }));
-    // scene.add(stars);
+    var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    scene.add(stars);
     // stars.rotation.x = deg_to_rad(90 - 34.)
 
-    var ground_geometry = new THREE.PlaneBufferGeometry(37, 37, 1, 1);
+    var ground_geometry = new THREE.PlaneBufferGeometry(7.4, 7.4, 1, 1);
     var ground_test = new THREE.Mesh(ground_geometry, ground_material);
     ground_test.rotateX(-pi / 2);
     scene.add(ground_test);
 
-    var sky_geometry = new THREE.SphereBufferGeometry(18.47, 50, 26);
+    var sky_geometry = new THREE.SphereBufferGeometry(3.7, 50, 26);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
     scene.add(sky_test);
 
@@ -437,7 +438,7 @@
     // loader.load('assets/placeholder_sky.glb', onLoadSky);
     // loader.load('assets/placeholder_ground.glb', onLoad);
     loader.load('assets/placeholder_clouds.glb', onLoadClouds);
-    loader.load('assets/lucky_cat.glb', onLoad);
+    // loader.load('assets/lucky_cat.glb', onLoad);
 
     function onLoadUnit(gltf) {
       // console.log(gltf);
@@ -541,7 +542,7 @@
       // Update sun position
       sun_altitude = Math.floor(guiControls.Sun * 1000) / 1000;
 
-      // stars.rotation.y = 0.00007 * time;
+      stars.rotation.y = 0.00007 * time;
 
 
       if (sun_altitude != prev_sun_altitude) {
