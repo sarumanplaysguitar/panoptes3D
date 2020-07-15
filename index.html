@@ -156,7 +156,7 @@
 
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "mediump" });
     renderer.outputEncoding = THREE.sRGBEncoding;
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 35);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40);
     camera.position.set(3, 0.6, 3);
     // camera.position.set(50, 3, 50);
     // controls = new THREE.PointerLockControls(camera, renderer.domElement);
@@ -406,7 +406,7 @@
 
     for (let i = 0; i < stars_arr.length; i++) {
       position = stars_arr[i];
-      if (i == 0) alert(position);
+      // if (i == 0) alert(position);
       // x, y, z
       vertices.push(position[0]);
       vertices.push(position[1]);
