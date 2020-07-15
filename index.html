@@ -156,7 +156,7 @@
 
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: true, antialias: true, precision: "mediump" });
     renderer.outputEncoding = THREE.sRGBEncoding;
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 180);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 25);
     camera.position.set(15, 3, 15);
     // camera.position.set(50, 3, 50);
     // controls = new THREE.PointerLockControls(camera, renderer.domElement);
@@ -433,7 +433,7 @@
 
     var unit, mesh, clouds, sky;
 
-    loader.load('assets/unit.glb', onLoadUnit);
+    loader.load('assets/robot.glb', onLoadUnit);
     // loader.load('assets/placeholder_sky.glb', onLoadSky);
     // loader.load('assets/placeholder_ground.glb', onLoad);
     loader.load('assets/placeholder_clouds.glb', onLoadClouds);
