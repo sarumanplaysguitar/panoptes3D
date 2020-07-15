@@ -180,18 +180,18 @@
 
     // Lighting 💡
 
-    const light1 = new THREE.PointLight(0xffcfa6, 0.3, 0);
+    const light1 = new THREE.PointLight(0xffcfa6, 0.2, 0);
     light1.position.set(10, 10, 10);
     scene.add(light1);
 
-    // const light2 = new THREE.PointLight(0xffcfa6, 0.3, 0);
-    // light2.position.set(-10, 10, -10);
-    // scene.add(light2);
+    const light2 = new THREE.PointLight(0xffcfa6, 0.1, 0);
+    light2.position.set(-10, 10, -10);
+    scene.add(light2);
 
     // var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     // scene.add(directionalLight);
 
-    var ambient_light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.5);
+    var ambient_light = new THREE.AmbientLight(0xbfa6ff, intensity = 1.);
     scene.add(ambient_light);
 
 
@@ -200,22 +200,22 @@
 
 
     // HDRI 🌇
-    var pmremGenerator = new THREE.PMREMGenerator(renderer);
-    new THREE.RGBELoader()
-      .setDataType(THREE.UnsignedByteType)
-      .setPath('assets/hdri/')
-      .load('placeholder_sunset.hdr', function (texture) {
+    // var pmremGenerator = new THREE.PMREMGenerator(renderer);
+    // new THREE.RGBELoader()
+    //   .setDataType(THREE.UnsignedByteType)
+    //   .setPath('assets/hdri/')
+    //   .load('placeholder_sunset.hdr', function (texture) {
 
-        var envMap = pmremGenerator.fromEquirectangular(texture).texture;
-        pmremGenerator.compileCubemapShader();
+    //     var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+    //     pmremGenerator.compileCubemapShader();
 
-        // scene.background = envMap;
-        scene.environment = envMap;
+    //     // scene.background = envMap;
+    //     scene.environment = envMap;
 
-        texture.dispose();
-        pmremGenerator.dispose();
+    //     texture.dispose();
+    //     pmremGenerator.dispose();
 
-      });
+    //   });
 
 
     // Materials 🎨
