@@ -71,8 +71,8 @@
 
     // Astronomical positions and data 🌙
     // (get from API later)
-    var sun_altitude = -10.;
-    var prev_sun_altitude = -10.
+    var sun_altitude = -49.;
+    var prev_sun_altitude = -49.
     // stars data was imported from data/mag_5_stars.js in stars_arr
     console.log(stars_arr)
 
@@ -80,6 +80,12 @@
     // Shaders 🔮
 
     const stars_vshader = `
+    // This shader...
+    // 1) rotates vertices about y axis with siderial time
+    // 2) rotates vertices about z axis with latitude
+    // 3) sets star point size
+    // 4) calculates some info for the fragment shader's cutoffs
+
     attribute float size;
     // varying vec3 vColor;
     varying vec4 mvPosition;
@@ -111,13 +117,18 @@
     uniform vec4 origin;
     varying vec4 glorigin;
     varying vec4 mv_origin;
+    uniform vec2 u_resolution;
 
     void main(void) {
+      float aspect_ratio = u_resolution.x / u_resolution.y;
+
       // vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
       // gl_FragColor = vec4(vColor, 1.0);
-      if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin))) || pos.y < 0. + 0.2) {
+
+      if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin)) + clamp(aspect_ratio, 10., 20.) * 0.02) || pos.y < 0. + 0.2) {
         discard;
         }
+      
       gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
 
     }
@@ -450,7 +461,7 @@
     });
 
     const stars_uniforms = {
-      u_resolution: { value: { x: 0, y: 0 } }
+      u_resolution: { value: { x: window.innerWidth, y: window.innerHeight } }
     }
 
     const stars_material = new THREE.ShaderMaterial({
@@ -559,7 +570,7 @@
     var guiControls = new function () {
       this.RA = -40.;
       this.Dec = 95.;
-      this.Latitude = 34.;
+      this.Latitude = 90.;
       this.Sun = sun_altitude;
       this.Cloudy = false;
       this.Axes = false;
@@ -582,7 +593,7 @@
       const height = canvas.clientHeight;
 
       if (canvas.width !== width || canvas.height !== height) {
-        console.log(`canvas dimensions: ${width}x${height}`)
+        console.log(`canvas dimensions: ${width}x${height} (${width / height})`)
         renderer.setSize(width, height, false);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
@@ -590,6 +601,8 @@
         sky_uniforms.u_resolution.value.y = height;
         ground_uniforms.u_resolution.value.x = width;
         ground_uniforms.u_resolution.value.y = height;
+        stars_uniforms.u_resolution.value.x = width;
+        stars_uniforms.u_resolution.value.y = height;
       }
     }
 
