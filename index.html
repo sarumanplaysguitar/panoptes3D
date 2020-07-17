@@ -112,10 +112,17 @@
     varying vec4 glorigin;
     uniform vec4 origin;
     varying vec4 mv_origin;
+    const float PI = 3.14159265358979323846;
+    const float PI_2 = 1.57079632679489661923;
+    const float PI_4 = 0.78539816339744830962;
 
     void main() {
       // vColor = color;
-      pos = rotation_matrix_z(u_unit_latitude) * position;
+
+      // Correct for the offset between how unit's latitude=0 (horizon)
+      // and star's default positions (NCP at zenith) were defined
+
+      pos = rotation_matrix_z(u_unit_latitude + PI_2) * position;
       mvPosition = modelViewMatrix * vec4(pos, 1.0);
       float camera_dist = distance(mvPosition, origin);
       gl_PointSize = size * clamp((7.0 / camera_dist), 0.5, 7.);
@@ -479,7 +486,7 @@
 
     const stars_uniforms = {
       u_resolution: { value: { x: window.innerWidth, y: window.innerHeight } },
-      u_unit_latitude: { value: unit_latitude }
+      u_unit_latitude: { value: -1. * deg_to_rad(unit_latitude) }
     }
 
     const stars_material = new THREE.ShaderMaterial({
@@ -652,8 +659,8 @@
       // Update sun position
       sun_altitude = Math.floor(guiControls.Sun * 1000) / 1000;
 
-      stars.rotation.y = 0.00007 * time;
-
+      // stars.rotation.y = 0.00007 * time;
+      // stars.rotation.y = 0.7 * time
 
       if (sun_altitude != prev_sun_altitude) {
         // Update sky colors 🌅
@@ -668,7 +675,7 @@
       if (unit_latitude != guiControls.Latitude) {
         // Update scene with new latitude set from the GUI
         // Specifically, update stars shader latitude uniform (convert to rad first)
-        stars_uniforms.u_unit_latitude.value = deg_to_rad(guiControls.Latitude);
+        stars_uniforms.u_unit_latitude.value = -1. * deg_to_rad(guiControls.Latitude);
         unit_latitude = guiControls.Latitude;
       }
 
