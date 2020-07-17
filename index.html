@@ -82,25 +82,46 @@
     const stars_vshader = `
     attribute float size;
     // varying vec3 vColor;
+    varying vec4 mvPosition;
+    varying vec3 pos;
+    varying vec4 glpos;
+    // varying vec4 origin;
+    varying vec4 glorigin;
+    uniform vec4 origin;
+    varying vec4 mv_origin;
 
     void main() {
       // vColor = color;
-      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-      gl_PointSize = size;
-      // gl_PointSize = size * (1000. / -mvPosition.z);
+      pos = position;
+      mvPosition = modelViewMatrix * vec4(position, 1.0);
+      float camera_dist = distance(mvPosition, origin);
+      gl_PointSize = size * clamp((7.0 / camera_dist), 0.5, 7.);
       gl_Position = projectionMatrix * mvPosition;
+      glpos = gl_Position;
+      mv_origin = modelViewMatrix * vec4(0., 0., 0., 1.0);
+      glorigin = projectionMatrix * origin;
     }
     `
 
     const stars_fshader = `
     // varying vec3 vColor;
+    varying vec4 mvPosition;
+    varying vec3 pos;
+    varying vec4 glpos;
+    uniform vec4 origin;
+    varying vec4 glorigin;
+    varying vec4 mv_origin;
 
-    void main() {
+    void main(void) {
+      // vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
       // gl_FragColor = vec4(vColor, 1.0);
+      if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin))) || pos.y < 0. + 0.2) {
+        discard;
+        }
       gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+
     }
     `
-
     const sky_vshader = `
     varying vec3 final_mix;
     uniform vec3 u_ground;
@@ -175,6 +196,7 @@
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "highp" });
     renderer.outputEncoding = THREE.sRGBEncoding;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40);
+    console.log(`focal length: ${Math.round(camera.getFocalLength())}`);
     camera.position.set(3, 0.6, 3);
     // camera.position.set(50, 3, 50);
     // controls = new THREE.PointerLockControls(camera, renderer.domElement);
@@ -186,6 +208,7 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.15;
     controls.update();
+
 
 
     // Scene setup 🖼
@@ -283,7 +306,7 @@
         0x2a277d,
         0x36419c
       ],
-      night: [
+      twilight_night: [
         0x00003f,
         0x101063,
         0x0a0a4f,
@@ -291,10 +314,18 @@
         0x050539,
         0x0b0b52
       ],
+      night: [
+        0x00003f,
+        0x0a0a4f,
+        0x070744,
+        0x050539,
+        0x050539,
+        0x0b0b52
+      ],
       deep_night: [
         0x00003f,
-        0x101063,
         0x0a0a4f,
+        0x070744,
         0x050539,
         0x050539,
         0x0b0b52
@@ -307,11 +338,12 @@
       green_golden: 0xa6a9ff,
       golden: 0xd7a6ff,
       twilight: 0xbfa6ff,
+      twilight_night: 0x6947bf,
       night: 0x6947bf,
       deep_night: 0x6947bf
     }
 
-    const sun_thresholds = [90, 50, -5, -10, -13, -18, -90];
+    const sun_thresholds = [90, 50, -5, -10, -13, -16, -18, -90];
 
     function blend_sky_colors(sun_altitude, sun_thresholds, sky_colors) {
       // Returns array of linearly interpolated sky colors (one for each degree breakpoint in sun_thresholds)
@@ -451,6 +483,7 @@
 
       // size (depends on visual mag, which can range from ~ -1 to 8)
       star_mag = position[4];
+      // size = 5 ^ (star_mag)
       size = (8. - star_mag ^ 3) * 0.15;
       star_sizes.push(size)
     }
@@ -462,7 +495,6 @@
     // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
     var stars = new THREE.Points(stars_geometry, stars_material);
     scene.add(stars);
-    // stars.rotation.x = deg_to_rad(90 - 34.)
 
     var ground_geometry = new THREE.PlaneBufferGeometry(7.4, 7.4, 1, 1);
     var ground_test = new THREE.Mesh(ground_geometry, ground_material);
@@ -481,7 +513,7 @@
 
     var unit, mesh, clouds, sky;
 
-    loader.load('assets/robot2.glb', onLoadUnit);
+    loader.load('assets/unit.glb', onLoadUnit);
     // loader.load('assets/placeholder_sky.glb', onLoadSky);
     // loader.load('assets/placeholder_ground.glb', onLoad);
     loader.load('assets/placeholder_clouds.glb', onLoadClouds);
@@ -606,10 +638,14 @@
       if (clouds) {
         if (guiControls.Cloudy) {
           clouds.visible = true;
-          clouds.rotation.y += 0.000001;
+          clouds.rotation.y += 0.00023;
         } else {
           clouds.visible = false;
         }
+      }
+
+      if (stars) {
+        stars.rotation.z = deg_to_rad(90 - guiControls.Latitude)
       }
 
       // Toggle axes ✖️
