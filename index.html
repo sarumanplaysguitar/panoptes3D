@@ -57,7 +57,7 @@
   <script type="text/javascript" src="js/dat.gui.min.js"></script>
   <script type="text/javascript" src="js/RGBELoader.js"></script>
   <script type="text/javascript" src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"></script>
-  <script type="text/javascript" src="data/mag_5_stars_copy.js"></script>
+  <script type="text/javascript" src="data/mag_5_stars.js"></script>
 
   <script type="text/javascript">
 
@@ -151,8 +151,12 @@
 
       if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin)) + clamp(aspect_ratio, 10., 20.) * 0.02) || pos.y < 0. + 0.2) {
         discard;
-        }
+      }
       
+      // if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin)) + clamp(aspect_ratio, 10., 20.) * 0.02)) {
+      //   discard;
+      // }
+
       gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
 
     }
@@ -518,9 +522,9 @@
       star_positions.push(position[2]);
 
       // size (depends on visual mag, which can range from ~ -1 to 8)
-      star_mag = position[4];
-      // size = 5 ^ (star_mag)
-      size = (8. - star_mag ^ 3) * 0.15;
+      star_mag = position[3];
+      // size = 0.2 * (star_mag ^ 5);
+      size = (2.5 ^ (-star_mag)) + 3;
       star_sizes.push(size)
     }
 
