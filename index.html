@@ -74,7 +74,7 @@
     // These are in degrees.
     var sun_altitude = -49.;
     var prev_sun_altitude = -49.;
-    var unit_latitude = 34.;
+    var unit_latitude = 90.;
 
     // stars data was imported from data/mag_5_stars.js in stars_arr
 
@@ -247,7 +247,6 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.15;
     controls.update();
-
 
 
     // Scene setup 🖼
@@ -501,40 +500,107 @@
     })
 
     // Objects 🔭
-    var stars_geometry = new THREE.BufferGeometry();
-    // var vertices = [];
-    var position;
 
-    var star_positions = [];
-    var star_colors = [];
-    var star_sizes = [];
-    var star_mag;
 
-    var star_color = new THREE.Color();
 
-    for (let i = 0; i < stars_arr.length; i++) {
-      position = stars_arr[i];
-      // if (i == 0) alert(position);
+    // var star_color = new THREE.Color();
 
-      // vertex position: x, y, z
-      star_positions.push(position[0]);
-      star_positions.push(position[1]);
-      star_positions.push(position[2]);
 
-      // size (depends on visual mag, which can range from ~ -1 to 8)
-      star_mag = position[3];
-      // size = 0.2 * (star_mag ^ 5);
-      size = (2.5 ^ (-star_mag)) + 3;
-      star_sizes.push(size)
+
+    function get_star_data(stars_arr, base_size) {
+
+      // Determine the following for each star in this array:
+      var position;
+      var star_mag;
+
+      // Store that data in the respective arrays, to be returned:
+      var star_positions = [];
+      var star_colors = [];
+      var star_sizes = [];
+
+      for (let i = 0; i < stars_arr.length; i++) {
+        position = stars_arr[i];
+
+        // Set vertex position: x, y, z
+        star_positions.push(position[0]);
+        star_positions.push(position[1]);
+        star_positions.push(position[2]);
+
+        // Calculate size
+        star_mag = position[3];
+        size = base_size;
+        // size = (8 - star_mag);
+        star_sizes.push(size);
+      }
+
+      return { positions: star_positions, colors: star_colors, sizes: star_sizes };
+
     }
 
-    stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(star_positions, 3));
+    // Brightest stars 🌟
+    var brightest_stars_geometry = new THREE.BufferGeometry();
+    var brightest_stars_data = get_star_data(brightest_stars_arr, 5);
+
+    brightest_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(brightest_stars_data.positions, 3));
     // stars_geometry.setAttribute('color', )
-    stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(star_sizes, 1).setUsage(THREE.DynamicDrawUsage));
+    brightest_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(brightest_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
 
     // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
-    var stars = new THREE.Points(stars_geometry, stars_material);
-    scene.add(stars);
+    var brightest_stars = new THREE.Points(brightest_stars_geometry, stars_material);
+    scene.add(brightest_stars);
+
+
+    // Bright stars 🌟
+    var bright_stars_geometry = new THREE.BufferGeometry();
+    var bright_stars_data = get_star_data(bright_stars_arr, 4.2);
+
+    bright_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(bright_stars_data.positions, 3));
+    // stars_geometry.setAttribute('color', )
+    bright_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(bright_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+
+    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    var bright_stars = new THREE.Points(bright_stars_geometry, stars_material);
+    scene.add(bright_stars);
+
+
+    // Average stars ⭐️
+    var average_stars_geometry = new THREE.BufferGeometry();
+    var average_stars_data = get_star_data(average_stars_arr, 3);
+
+    average_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(average_stars_data.positions, 3));
+    // stars_geometry.setAttribute('color', )
+    average_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(average_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+
+    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    var average_stars = new THREE.Points(average_stars_geometry, stars_material);
+    scene.add(average_stars);
+
+
+    // Faint stars ✨
+    var faint_stars_geometry = new THREE.BufferGeometry();
+    var faint_stars_data = get_star_data(faint_stars_arr, 1.5);
+
+    faint_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(faint_stars_data.positions, 3));
+    // stars_geometry.setAttribute('color', )
+    faint_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(faint_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+
+    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    var faint_stars = new THREE.Points(faint_stars_geometry, stars_material);
+    scene.add(faint_stars);
+
+
+    // Faintest stars ✨
+    var faintest_stars_geometry = new THREE.BufferGeometry();
+    var faintest_stars_data = get_star_data(faintest_stars_arr, 0.5);
+
+    faintest_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(faintest_stars_data.positions, 3));
+    // stars_geometry.setAttribute('color', )
+    faintest_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(faintest_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+
+    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    var faintest_stars = new THREE.Points(faintest_stars_geometry, stars_material);
+    scene.add(faintest_stars);
+
 
     var ground_geometry = new THREE.PlaneBufferGeometry(7.4, 7.4, 1, 1);
     var ground_test = new THREE.Mesh(ground_geometry, ground_material);
@@ -602,7 +668,7 @@
       this.Latitude = unit_latitude;
       this.Sun = sun_altitude;
       this.Cloudy = false;
-      this.Axes = false;
+      this.Axes = true;
     }
 
     var gui = new dat.GUI();
