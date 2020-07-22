@@ -828,7 +828,33 @@
         // console.log(sun_altitude);
         prev_sun_altitude = sun_altitude;
         console.log(sun_altitude);
+
+        if (sun_altitude < -8) {
+          brightest_stars.visible = true;
+        } else {
+          brightest_stars.visible = false;
+        }
+
+        if (sun_altitude < -10) {
+          bright_stars.visible = true;
+        } else {
+          bright_stars.visible = false;
+        }
+
+        if (sun_altitude < -13) {
+          average_stars.visible = true;
+        } else {
+          average_stars.visible = false;
+        }
+
+        if (sun_altitude < -18) {
+          faint_stars.visible = true;
+        } else {
+          faint_stars.visible = false;
+        }
       }
+
+
       // // ...then redraw it + change lighting too
 
       if (unit_latitude != guiControls.Latitude) {
