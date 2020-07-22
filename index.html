@@ -74,7 +74,7 @@
     // These are in degrees.
     var sun_altitude = -49.;
     var prev_sun_altitude = -49.;
-    var unit_latitude = 90.;
+    var unit_latitude = 34.;
 
     // stars data was imported from data/mag_5_stars.js in stars_arr
 
@@ -102,9 +102,14 @@
     }
 
     // need uniforms u_unit_latitude, u_siderial_angle in here 
+    // varying vec2 vUv;
+    varying vec2 v_uv;
     uniform float u_unit_latitude;
+    uniform float u_scale;
+    uniform vec2 u_resolution;
     attribute float size;
-    // varying vec3 vColor;
+    attribute float twinkle_offset;
+    uniform float u_time;
     varying vec4 mvPosition;
     varying vec3 pos;
     varying vec4 glpos;
@@ -115,9 +120,17 @@
     const float PI = 3.14159265358979323846;
     const float PI_2 = 1.57079632679489661923;
     const float PI_4 = 0.78539816339744830962;
+    attribute vec3 star_color;
+    varying vec3 vColor;
 
     void main() {
-      // vColor = color;
+
+      #ifdef USE_COLOR
+        vColor = star_color;
+        // vColor = vec3( 1.0, 0.0, 0.0 );
+      #endif
+
+      v_uv = uv - 0.5;
 
       // Correct for the offset between how unit's latitude=0 (horizon)
       // and star's default positions (NCP at zenith) were defined
@@ -125,7 +138,11 @@
       pos = rotation_matrix_z(u_unit_latitude + PI_2) * position;
       mvPosition = modelViewMatrix * vec4(pos, 1.0);
       float camera_dist = distance(mvPosition, origin);
-      gl_PointSize = size * clamp((7.0 / camera_dist), 0.5, 7.);
+
+      // shrink w/ distance
+      float attenuation_factor = (u_resolution.y / (2. * - mvPosition.z));
+
+      gl_PointSize = (size + 25. * pow(size, 3.) * sin(10. * u_time + twinkle_offset)) * attenuation_factor;
       gl_Position = projectionMatrix * mvPosition;
       glpos = gl_Position;
       mv_origin = modelViewMatrix * vec4(0., 0., 0., 1.0);
@@ -134,30 +151,30 @@
     `
 
     const stars_fshader = `
-    // varying vec3 vColor;
+    varying vec3 vColor;
     varying vec4 mvPosition;
     varying vec3 pos;
     varying vec4 glpos;
     uniform vec4 origin;
-    varying vec4 glorigin;
     varying vec4 mv_origin;
     uniform vec2 u_resolution;
+    varying vec2 v_uv;
+    
 
     void main(void) {
+
+      // float r = 0.799999999;
+      // float d = length(v_uv);
+      // float a = smoothstep(r, r-0.01, d);
+
       float aspect_ratio = u_resolution.x / u_resolution.y;
 
-      // vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-      // gl_FragColor = vec4(vColor, 1.0);
-
+      // clip stars below horizon, and ones with "backs" facing camera
       if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin)) + clamp(aspect_ratio, 10., 20.) * 0.02) || pos.y < 0. + 0.2) {
         discard;
       }
-      
-      // if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin)) + clamp(aspect_ratio, 10., 20.) * 0.02)) {
-      //   discard;
-      // }
 
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      gl_FragColor = vec4(vColor, 1.);
 
     }
     `
@@ -381,6 +398,16 @@
       deep_night: 0x6947bf
     }
 
+    const star_colors = {
+      o: 0xc8c7ff, b: 0xbbdaff, a: 0xe7ecff, f: 0xedffff, g: 0xfafff1, k: 0xffffca, m: 0xffcdcd
+    };
+
+    // const star_colors = [
+    //   // 0xff0000, 0xc8c7ff, 0xbbdaff, 0xe7ecff, 0xedffff, 0xfafff1, 0xffffca, 0xffcdcd
+    // ];
+
+    const star_color_index = [-0.33, -0.3, -0.02, 0.3, 0.58, 0.81, 1.4];
+
     const sun_thresholds = [90, 50, -5, -10, -13, -16, -18, -90];
 
     function blend_sky_colors(sun_altitude, sun_thresholds, sky_colors) {
@@ -447,12 +474,15 @@
     var blended_sky_colors = blend_sky_colors(sun_altitude, sun_thresholds, sky_colors);
 
     function update_colors(sky_uniforms, ground_uniforms, new_sky_colors) {
+      // Update any colors dependent on sun latitude here, ie. sky and ground
+      // also fog...?
       sky_uniforms.u_ground = { value: new_sky_colors[0] },
         sky_uniforms.u_horizon = { value: new_sky_colors[1] },
         sky_uniforms.u_low = { value: new_sky_colors[2] },
         sky_uniforms.u_mid = { value: new_sky_colors[3] },
         sky_uniforms.u_upper = { value: new_sky_colors[4] },
         ground_uniforms.u_ground_glow = { value: new_sky_colors[5] }
+      // console.log(new_sky_colors);
     }
 
     const sky_uniforms = {
@@ -488,16 +518,25 @@
     });
 
     const stars_uniforms = {
+      u_time: { value: 0.0 },
       u_resolution: { value: { x: window.innerWidth, y: window.innerHeight } },
+      u_scale: { value: window.innerHeight / 2. },
       u_unit_latitude: { value: -1. * deg_to_rad(unit_latitude) }
     }
 
+    console.log(window.innerHeight);
+    console.log(renderer.domElement.clientHeight);
+
     const stars_material = new THREE.ShaderMaterial({
+      defines: {
+        USE_COLOR: true,
+      },
       uniforms: stars_uniforms,
       vertexShader: stars_vshader,
       fragmentShader: stars_fshader,
-      // vertexColors: true;
-    })
+      transparent: true
+      // vertexColors: true
+    });
 
     // Objects 🔭
 
@@ -507,19 +546,27 @@
 
 
 
-    function get_star_data(stars_arr, base_size) {
+    function get_star_data(stars_arr, median_magnitude, base_size) {
 
-      // Determine the following for each star in this array:
+      // Each star has data in this order: [x, y, z, vmag, color, con]
+      // Get star data and determine the following for each star in this array:
+      var star_data;
       var position;
-      var star_mag;
+      var mag;
+      var bv_index;
+      var color = new THREE.Color();
+      var twinkle_offset;
 
       // Store that data in the respective arrays, to be returned:
       var star_positions = [];
+      // var star_colors = new Float32Array(stars_arr.length * 3);
       var star_colors = [];
       var star_sizes = [];
+      var twinkle_offsets = [];
 
       for (let i = 0; i < stars_arr.length; i++) {
-        position = stars_arr[i];
+        star_data = stars_arr[i];
+        position = star_data.slice(0, 3);
 
         // Set vertex position: x, y, z
         star_positions.push(position[0]);
@@ -527,23 +574,57 @@
         star_positions.push(position[2]);
 
         // Calculate size
-        star_mag = position[3];
+        mag = star_data[3];
         size = base_size;
-        // size = (8 - star_mag);
+        // size = (8 - mag);
         star_sizes.push(size);
+
+        // Determine and set color
+        bv_index = star_data[4];
+        if (bv_index <= star_color_index[0]) {
+          color.setHex(0xc3c2ff);
+        } else if (bv_index <= star_color_index[1]) {
+          color.setHex(0xb5d6ff);
+        } else if (bv_index <= star_color_index[2]) {
+          color.setHex(0xe5ebff);
+        } else if (bv_index <= star_color_index[3]) {
+          color.setHex(0xebffff);
+        } else if (bv_index <= star_color_index[4]) {
+          color.setHex(0xf9fff0);
+        } else if (bv_index <= star_color_index[5]) {
+          color.setHex(0xffffc5);
+        } else {
+          color.setHex(0xffc9c9);
+        }
+
+        // star_colors.push([color.r, color.g, color.b]);
+        star_colors.push(color.r, color.g, color.b);
+        // color.toArray(star_colors, i * 3);
+        if (i == 5) console.log(star_colors);
+        if (i == 1) console.log(star_colors[0]);
+
+        // Unique, random twinkle phase shift
+        twinkle_offset = Math.random() * 10
+        twinkle_offsets.push(twinkle_offset)
       }
 
-      return { positions: star_positions, colors: star_colors, sizes: star_sizes };
+      return { positions: star_positions, colors: star_colors, sizes: star_sizes, twinkle_offsets: twinkle_offsets };
 
     }
 
     // Brightest stars 🌟
     var brightest_stars_geometry = new THREE.BufferGeometry();
-    var brightest_stars_data = get_star_data(brightest_stars_arr, 5);
+    var brightest_stars_data = get_star_data(brightest_stars_arr, 0., 3. * 0.001);
+
+    console.log(brightest_stars_data.positions.length);
+    console.log(brightest_stars_data.colors.length);
 
     brightest_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(brightest_stars_data.positions, 3));
-    // stars_geometry.setAttribute('color', )
+    // brightest_stars_geometry.colors = brightest_stars_data.colors
+    brightest_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(brightest_stars_data.colors, 3));
+    // console.log(brightest_stars_data.colors);
     brightest_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(brightest_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+    brightest_stars_geometry.setAttribute('twinkle_offset', new THREE.Float32BufferAttribute(brightest_stars_data.twinkle_offsets, 1).setUsage(THREE.DynamicDrawUsage));
 
     // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
     var brightest_stars = new THREE.Points(brightest_stars_geometry, stars_material);
@@ -552,11 +633,13 @@
 
     // Bright stars 🌟
     var bright_stars_geometry = new THREE.BufferGeometry();
-    var bright_stars_data = get_star_data(bright_stars_arr, 4.2);
+    var bright_stars_data = get_star_data(bright_stars_arr, 1.5, 2.75 * 0.025);
 
     bright_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(bright_stars_data.positions, 3));
+    bright_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(bright_stars_data.colors, 3));
     // stars_geometry.setAttribute('color', )
     bright_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(bright_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+    bright_stars_geometry.setAttribute('twinkle_offset', new THREE.Float32BufferAttribute(bright_stars_data.twinkle_offsets, 1).setUsage(THREE.DynamicDrawUsage));
 
     // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
     var bright_stars = new THREE.Points(bright_stars_geometry, stars_material);
@@ -565,11 +648,13 @@
 
     // Average stars ⭐️
     var average_stars_geometry = new THREE.BufferGeometry();
-    var average_stars_data = get_star_data(average_stars_arr, 3);
+    var average_stars_data = get_star_data(average_stars_arr, 2.5, 1.2 * 0.025);
 
     average_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(average_stars_data.positions, 3));
+    average_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(average_stars_data.colors, 3));
     // stars_geometry.setAttribute('color', )
     average_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(average_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+    average_stars_geometry.setAttribute('twinkle_offset', new THREE.Float32BufferAttribute(average_stars_data.twinkle_offsets, 1).setUsage(THREE.DynamicDrawUsage));
 
     // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
     var average_stars = new THREE.Points(average_stars_geometry, stars_material);
@@ -578,28 +663,31 @@
 
     // Faint stars ✨
     var faint_stars_geometry = new THREE.BufferGeometry();
-    var faint_stars_data = get_star_data(faint_stars_arr, 1.5);
+    var faint_stars_data = get_star_data(faint_stars_arr, 4.5, 1. * 0.025);
 
     faint_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(faint_stars_data.positions, 3));
+    faint_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(faint_stars_data.colors, 3));
     // stars_geometry.setAttribute('color', )
     faint_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(faint_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+    faint_stars_geometry.setAttribute('twinkle_offset', new THREE.Float32BufferAttribute(faint_stars_data.twinkle_offsets, 1).setUsage(THREE.DynamicDrawUsage));
 
     // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
     var faint_stars = new THREE.Points(faint_stars_geometry, stars_material);
     scene.add(faint_stars);
 
 
-    // Faintest stars ✨
-    var faintest_stars_geometry = new THREE.BufferGeometry();
-    var faintest_stars_data = get_star_data(faintest_stars_arr, 0.5);
+    // // Faintest stars ✨
+    // var faintest_stars_geometry = new THREE.BufferGeometry();
+    // var faintest_stars_data = get_star_data(faintest_stars_arr, 0.4);
 
-    faintest_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(faintest_stars_data.positions, 3));
-    // stars_geometry.setAttribute('color', )
-    faintest_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(faintest_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+    // faintest_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(faintest_stars_data.positions, 3));
+    // // stars_geometry.setAttribute('color', )
+    // faintest_stars_geometry.setAttribute('size', new THREE.Float32BufferAttribute(faintest_stars_data.sizes, 1).setUsage(THREE.DynamicDrawUsage));
+    // faintest_stars_geometry.setAttribute('twinkle_offset', new THREE.Float32BufferAttribute(faintest_stars_data.twinkle_offsets, 1).setUsage(THREE.DynamicDrawUsage));
 
-    // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
-    var faintest_stars = new THREE.Points(faintest_stars_geometry, stars_material);
-    scene.add(faintest_stars);
+    // // var stars = new THREE.Points(stars_geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, fog: false }));
+    // var faintest_stars = new THREE.Points(faintest_stars_geometry, stars_material);
+    // scene.add(faintest_stars);
 
 
     var ground_geometry = new THREE.PlaneBufferGeometry(7.4, 7.4, 1, 1);
@@ -668,7 +756,7 @@
       this.Latitude = unit_latitude;
       this.Sun = sun_altitude;
       this.Cloudy = false;
-      this.Axes = true;
+      this.Axes = false;
     }
 
     var gui = new dat.GUI();
@@ -708,6 +796,7 @@
       var time = performance.now();
       time *= 0.001; // convert ms to seconds
       sky_uniforms.u_time.value = time;
+      stars_uniforms.u_time.value = time;
 
       resize_canvas_to_display_size();
       controls.update(); // damping
