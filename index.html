@@ -268,7 +268,7 @@
 
     // Camera settings 🎥
 
-    var env_scale_fac = 5;
+    var env_scale_fac = 10;
 
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "highp" });
     renderer.outputEncoding = THREE.sRGBEncoding;
@@ -603,7 +603,7 @@
 
         // Calculate size
         mag = star_data[3];
-        size = base_size * (1.75);
+        size = base_size * (2.5);
         // size = (8 - mag);
         star_sizes.push(size);
 
@@ -676,7 +676,7 @@
 
     // Average stars ⭐️
     var average_stars_geometry = new THREE.BufferGeometry();
-    var average_stars_data = get_star_data(average_stars_arr, 2.5, 1.2 * 0.025);
+    var average_stars_data = get_star_data(average_stars_arr, 2.5, 2 * 0.025);
 
     average_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(average_stars_data.positions, 3));
     average_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(average_stars_data.colors, 3));
@@ -691,7 +691,7 @@
 
     // Faint stars ✨
     var faint_stars_geometry = new THREE.BufferGeometry();
-    var faint_stars_data = get_star_data(faint_stars_arr, 4.5, 1. * 0.025);
+    var faint_stars_data = get_star_data(faint_stars_arr, 4.5, 1.5 * 0.025);
 
     faint_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(faint_stars_data.positions, 3));
     faint_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(faint_stars_data.colors, 3));
@@ -773,6 +773,7 @@
     function onLoadClouds(gltf) {
       // console.log(gltf);
       clouds = gltf.scene;
+      clouds.scale.set(env_scale_fac, env_scale_fac, env_scale_fac);
       // sky.lights = false;
 
       scene.add(clouds);
