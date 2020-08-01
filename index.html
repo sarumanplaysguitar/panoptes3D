@@ -74,6 +74,7 @@
     // These are in degrees.
     var sun_altitude = -49.;
     var prev_sun_altitude = -49.;
+    var sidereal = 0.;
     var unit_latitude = 34.;
 
     // stars data was imported from data/mag_5_stars.js in stars_arr
@@ -101,6 +102,18 @@
 
     }
 
+    mat3 rotation_matrix_y(float angle_rad) {
+      vec3 axis = vec3(0., 1., 0.);
+      float s = sin(angle_rad);
+      float c = cos(angle_rad);
+
+      return mat3(
+        c, 0, s,
+        0, 1, 0,
+        -s, 0, c
+      );
+    }
+
     // need uniforms u_unit_latitude, u_siderial_angle in here 
     // varying vec2 vUv;
     varying vec2 v_uv;
@@ -110,6 +123,7 @@
     attribute float size;
     attribute float twinkle_offset;
     uniform float u_time;
+    uniform float u_sidereal;
     varying vec4 mvPosition;
     varying vec3 pos;
     varying vec4 glpos;
@@ -135,7 +149,8 @@
       // Correct for the offset between how unit's latitude=0 (horizon)
       // and star's default positions (NCP at zenith) were defined
 
-      pos = rotation_matrix_z(u_unit_latitude + PI_2) * position;
+      pos = rotation_matrix_y(u_sidereal) * position;
+      pos = rotation_matrix_z(u_unit_latitude + PI_2) * pos;
       mvPosition = modelViewMatrix * vec4(pos, 1.0);
       float camera_dist = distance(mvPosition, origin);
 
@@ -170,6 +185,7 @@
       float aspect_ratio = u_resolution.x / u_resolution.y;
 
       // clip stars below horizon, and ones with "backs" facing camera
+      // if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin)) + clamp(aspect_ratio, 10., 20.) * 0.02)) {
       if ( mvPosition.z > mv_origin.z + (11.0 * (1. / length(mv_origin)) + clamp(aspect_ratio, 10., 20.) * 0.02) || pos.y < 0. + 0.2) {
         discard;
       }
@@ -519,6 +535,7 @@
 
     const stars_uniforms = {
       u_time: { value: 0.0 },
+      u_sidereal: { value: 0.0 },
       u_resolution: { value: { x: window.innerWidth, y: window.innerHeight } },
       u_scale: { value: window.innerHeight / 2. },
       u_unit_latitude: { value: -1. * deg_to_rad(unit_latitude) }
@@ -695,6 +712,7 @@
     ground_test.position.y = -0.01;
     ground_test.rotateX(-pi / 2);
     scene.add(ground_test);
+    ground_test.visible = false;
 
     var sky_geometry = new THREE.SphereBufferGeometry(3.7, 50, 26);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
@@ -754,6 +772,7 @@
       this.RA = -40.;
       this.Dec = 95.;
       this.Latitude = unit_latitude;
+      this.Sidereal = 0.;
       this.Sun = sun_altitude;
       this.Cloudy = false;
       this.Axes = false;
@@ -763,6 +782,7 @@
     gui.add(guiControls, 'RA', -180, 180);
     gui.add(guiControls, 'Dec', -180, 180);
     gui.add(guiControls, 'Latitude', 0, 90);
+    gui.add(guiControls, 'Sidereal', 0, 360)
     gui.add(guiControls, 'Sun', -90, 90);
     gui.add(guiControls, 'Cloudy');
     gui.add(guiControls, 'Axes');
@@ -863,6 +883,13 @@
         stars_uniforms.u_unit_latitude.value = -1. * deg_to_rad(guiControls.Latitude);
         unit_latitude = guiControls.Latitude;
       }
+
+      // Rotate stars :D (ie. depending on time of year and your longitude)
+      // if (sidereal != guiControls.Sidereal) {
+      //   stars_uniforms.u_sidereal = deg_to_rad(guiControls.Sidereal);
+      //   sidereal = guiControls.Sidereal;
+      //   console.log(sidereal);
+      // }
 
       // Toggle clouds ☁️
       if (clouds) {
