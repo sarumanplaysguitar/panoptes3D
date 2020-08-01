@@ -52,6 +52,7 @@
   </div>
 
   <script type="text/javascript" src="js/three.min.js"></script>
+  <!-- <script type="module" src="js/VRButton.js"></script> -->
   <script type="text/javascript" src="js/OrbitControls.js"></script>
   <script type="text/javascript" src="js/GLTFLoader.js"></script>
   <script type="text/javascript" src="js/dat.gui.min.js"></script>
@@ -59,7 +60,9 @@
   <script type="text/javascript" src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"></script>
   <script type="text/javascript" src="data/mag_5_stars.js"></script>
 
-  <script type="text/javascript">
+
+  <script type="module">
+    import { VRButton } from './js/VRButton.js';
 
     console.log(`using three.js r${THREE.REVISION}`);
 
@@ -267,6 +270,9 @@
 
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "highp" });
     renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.xr.enabled = true;
+    document.body.appendChild(VRButton.createButton(renderer));
+
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40);
     console.log(`focal length: ${Math.round(camera.getFocalLength())}`);
     camera.position.set(3, 0.6, 3);
@@ -304,7 +310,9 @@
     // var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     // scene.add(directionalLight);
 
-    var ambient_light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.5);
+    // var ambient_light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.5);
+    var ambient_light = new THREE.AmbientLight(0xbfa6ff);
+    ambient_light.intensity = 0.5;
     scene.add(ambient_light);
 
 
@@ -570,6 +578,7 @@
       var star_data;
       var position;
       var mag;
+      var size;
       var bv_index;
       var color = new THREE.Color();
       var twinkle_offset;
@@ -823,6 +832,12 @@
 
       // Animate unit pointing 🔭
 
+      var dec_axis;
+      var ra_axis;
+      var lat;
+      var mount;
+      var pier;
+
       if (unit) {
         dec_axis = unit.getObjectByName("empty_dec", true); // aka head unit
         ra_axis = unit.getObjectByName("empty_ra", true);
@@ -915,10 +930,11 @@
       }
 
       renderer.render(scene, camera);
-      requestAnimationFrame(animate);
+      // requestAnimationFrame(animate);
     }
 
-    requestAnimationFrame(animate);
+    renderer.setAnimationLoop(animate);
+    // requestAnimationFrame(animate);
 
   </script>
 </body>
