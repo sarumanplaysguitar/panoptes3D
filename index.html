@@ -268,12 +268,14 @@
 
     // Camera settings 🎥
 
+    var env_scale_fac = 5;
+
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "highp" });
     renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.xr.enabled = true;
     document.body.appendChild(VRButton.createButton(renderer));
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40 * 2);
     console.log(`focal length: ${Math.round(camera.getFocalLength())}`);
     camera.position.set(3, 0.6, 3);
     // camera.position.set(50, 3, 50);
@@ -595,13 +597,13 @@
         position = star_data.slice(0, 3);
 
         // Set vertex position: x, y, z
-        star_positions.push(position[0]);
-        star_positions.push(position[1]);
-        star_positions.push(position[2]);
+        star_positions.push(position[0] * env_scale_fac);
+        star_positions.push(position[1] * env_scale_fac);
+        star_positions.push(position[2] * env_scale_fac);
 
         // Calculate size
         mag = star_data[3];
-        size = base_size;
+        size = base_size * (1.75);
         // size = (8 - mag);
         star_sizes.push(size);
 
@@ -716,14 +718,14 @@
     // scene.add(faintest_stars);
 
 
-    var ground_geometry = new THREE.PlaneBufferGeometry(7.4, 7.4, 1, 1);
+    var ground_geometry = new THREE.PlaneBufferGeometry(7.4 * (env_scale_fac * 0.4), 7.4 * (env_scale_fac * 0.4), 1, 1);
     var ground_test = new THREE.Mesh(ground_geometry, ground_material);
     ground_test.position.y = -0.01;
     ground_test.rotateX(-pi / 2);
     scene.add(ground_test);
-    ground_test.visible = false;
+    // ground_test.visible = false;
 
-    var sky_geometry = new THREE.SphereBufferGeometry(3.7, 50, 26);
+    var sky_geometry = new THREE.SphereBufferGeometry(3.7 * env_scale_fac, 50, 26);
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
     scene.add(sky_test);
 
@@ -743,6 +745,8 @@
     function onLoadUnit(gltf) {
       // console.log(gltf);
       unit = gltf.scene;
+      unit.position.x = -2 / Math.sqrt(2);
+      unit.position.z = -2 / Math.sqrt(2);
 
       scene.add(unit);
     }
@@ -779,7 +783,8 @@
 
     var guiControls = new function () {
       this.RA = -40.;
-      this.Dec = 95.;
+      // this.Dec = 95.;
+      this.Dec = 88.;
       this.Latitude = unit_latitude;
       this.Sidereal = 0.;
       this.Sun = sun_altitude;
