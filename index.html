@@ -56,6 +56,7 @@
   <script type="text/javascript" src="js/OrbitControls.js"></script>
   <script type="text/javascript" src="js/GLTFLoader.js"></script>
   <script type="text/javascript" src="js/dat.gui.min.js"></script>
+  <script type="text/javascript" src="js/ObjectLoader.js"></script>
   <script type="text/javascript" src="js/RGBELoader.js"></script>
   <script type="text/javascript" src="https://unpkg.com/stats.js@0.17.0/build/stats.min.js"></script>
   <script type="text/javascript" src="data/mag_5_stars.js"></script>
@@ -293,7 +294,7 @@
     // Scene setup 🖼
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x00003f, -5, 20);
+    scene.fog = new THREE.Fog(0x00003f, -20, 20);
     scene.background = new THREE.Color(0x3A3A3A);
     // scene.fog = new THREE.Fog(0xffffff, 0, 5);
 
@@ -527,6 +528,14 @@
       u_resolution: { value: { x: 0, y: 0 } }
     };
 
+    var object_loader = new THREE.ObjectLoader();
+
+    const horizon_material = new THREE.MeshBasicMaterial({
+      // alphaMap: object_loader.load('assets/textures/horizon_mountains.png'),
+      side: THREE.BackSide,
+      fog: false
+    });
+
     const sky_material = new THREE.ShaderMaterial({
       uniforms: sky_uniforms,
       vertexShader: sky_vshader,
@@ -729,14 +738,19 @@
     var sky_test = new THREE.Mesh(sky_geometry, sky_material);
     scene.add(sky_test);
 
+    // var horizon_geometry = new THREE.CylinderBufferGeometry(3 * env_scale_fac, 3 * env_scale_fac, 1, 50);
+    // var horizon_test = new THREE.Mesh(horizon_geometry, horizon_material);
+    // scene.add(horizon_test);
+
     var axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
 
     var loader = new THREE.GLTFLoader();
 
-    var unit, mesh, clouds, sky;
+    var unit, mesh, clouds, sky, control_box;
 
     loader.load('assets/unit.glb', onLoadUnit);
+    loader.load('assets/control_box.glb', onLoadControlBox);
     // loader.load('assets/placeholder_sky.glb', onLoadSky);
     // loader.load('assets/placeholder_ground.glb', onLoad);
     loader.load('assets/placeholder_clouds.glb', onLoadClouds);
@@ -749,6 +763,16 @@
       unit.position.z = -2 / Math.sqrt(2);
 
       scene.add(unit);
+    }
+
+    function onLoadControlBox(gltf) {
+      // console.log(gltf);
+      control_box = gltf.scene;
+      control_box.position.x = -4 / Math.sqrt(2);
+      control_box.position.z = -3 / Math.sqrt(2);
+      control_box.rotateY(deg_to_rad(145.));
+
+      scene.add(control_box);
     }
 
     function onLoadSky(gltf) {
