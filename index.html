@@ -63,7 +63,6 @@
 
 
   <script type="module">
-    import { VRButton } from './js/VRButton.js';
 
     console.log(`using three.js r${THREE.REVISION}`);
 
@@ -159,9 +158,11 @@
       float camera_dist = distance(mvPosition, origin);
 
       // shrink w/ distance
-      float attenuation_factor = (u_resolution.y / (2. * - mvPosition.z));
+      float attenuation_factor = (u_resolution.y / (2. * - mvPosition.z)) * 0.01;
 
-      gl_PointSize = (size + 25. * pow(size, 3.) * sin(10. * u_time + twinkle_offset)) * attenuation_factor;
+      // gl_PointSize = (size + 25. * pow(size, 3.) * sin(10. * u_time + twinkle_offset)) * attenuation_factor;
+      // gl_PointSize = (size + 25. * pow(size, 3.) * sin(10. * u_time + twinkle_offset)) * attenuation_factor;
+      gl_PointSize = 1. * size * attenuation_factor;
       gl_Position = projectionMatrix * mvPosition;
       glpos = gl_Position;
       mv_origin = modelViewMatrix * vec4(0., 0., 0., 1.0);
@@ -269,18 +270,14 @@
 
     // Camera settings 🎥
 
-    var env_scale_fac = 10;
+    var env_scale_fac = 1;
 
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "highp" });
     renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.xr.enabled = true;
-    document.body.appendChild(VRButton.createButton(renderer));
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40 * 2);
     console.log(`focal length: ${Math.round(camera.getFocalLength())}`);
     camera.position.set(3, 0.6, 3);
-    // camera.position.set(50, 3, 50);
-    // controls = new THREE.PointerLockControls(camera, renderer.domElement);
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0.5, 0);
     controls.enablePan = false;
@@ -576,12 +573,6 @@
 
     // Objects 🔭
 
-
-
-    // var star_color = new THREE.Color();
-
-
-
     function get_star_data(stars_arr, median_magnitude, base_size) {
 
       // Each star has data in this order: [x, y, z, vmag, color, con]
@@ -612,7 +603,9 @@
 
         // Calculate size
         mag = star_data[3];
-        size = base_size * (2.5);
+        size = -1 * mag + 6;
+        console.log(size);
+        // size = base_size * (2.5);
         // size = (8 - mag);
         star_sizes.push(size);
 
@@ -685,7 +678,7 @@
 
     // Average stars ⭐️
     var average_stars_geometry = new THREE.BufferGeometry();
-    var average_stars_data = get_star_data(average_stars_arr, 2.5, 2 * 0.025);
+    var average_stars_data = get_star_data(average_stars_arr, 2.5, 1.2 * 0.025);
 
     average_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(average_stars_data.positions, 3));
     average_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(average_stars_data.colors, 3));
@@ -700,7 +693,7 @@
 
     // Faint stars ✨
     var faint_stars_geometry = new THREE.BufferGeometry();
-    var faint_stars_data = get_star_data(faint_stars_arr, 4.5, 1.5 * 0.025);
+    var faint_stars_data = get_star_data(faint_stars_arr, 4.5, 1. * 0.025);
 
     faint_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(faint_stars_data.positions, 3));
     faint_stars_geometry.setAttribute('star_color', new THREE.Float32BufferAttribute(faint_stars_data.colors, 3));
@@ -759,8 +752,8 @@
     function onLoadUnit(gltf) {
       // console.log(gltf);
       unit = gltf.scene;
-      unit.position.x = -2 / Math.sqrt(2);
-      unit.position.z = -2 / Math.sqrt(2);
+      // unit.position.x = -2 / Math.sqrt(2);
+      // unit.position.z = -2 / Math.sqrt(2);
 
       scene.add(unit);
     }
@@ -768,8 +761,8 @@
     function onLoadControlBox(gltf) {
       // console.log(gltf);
       control_box = gltf.scene;
-      control_box.position.x = -4 / Math.sqrt(2);
-      control_box.position.z = -3 / Math.sqrt(2);
+      control_box.position.x = -2 / Math.sqrt(2);
+      control_box.position.z = -1 / Math.sqrt(2);
       control_box.rotateY(deg_to_rad(145.));
 
       scene.add(control_box);
@@ -808,7 +801,6 @@
 
     var guiControls = new function () {
       this.RA = -40.;
-      // this.Dec = 95.;
       this.Dec = 88.;
       this.Latitude = unit_latitude;
       this.Sidereal = 0.;
@@ -960,11 +952,10 @@
       }
 
       renderer.render(scene, camera);
-      // requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
     }
 
-    renderer.setAnimationLoop(animate);
-    // requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 
   </script>
 </body>
