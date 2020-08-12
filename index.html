@@ -557,8 +557,8 @@
       u_unit_latitude: { value: -1. * deg_to_rad(unit_latitude) }
     }
 
-    console.log(window.innerHeight);
-    console.log(renderer.domElement.clientHeight);
+    // console.log(window.innerHeight);
+    // console.log(renderer.domElement.clientHeight);
 
     const stars_material = new THREE.ShaderMaterial({
       defines: {
@@ -572,6 +572,75 @@
     });
 
     // Objects 🔭
+
+    var line_mat = new THREE.LineBasicMaterial({
+      color: 0x0000ff,
+      fog: false
+    });
+
+    var line_points = [];
+    var r = 3.6;
+    // var x = 3.6 * Math.cos(deg_to_rad(15 / 2));
+    // var y = 3.6 * Math.sin(deg_to_rad(15 / 2))
+    var half_theta_x = 15 / 2;
+    var half_theta_y = 10 / 2;
+    var x = [0.4 + 2 * r - 0.5, 0.5 + 2 * r - 0.5, 0.5 + 2 * r - 0.5, 0.4 + 2 * r - 0.5];
+    var y = [0.5 + 0.5, 0.25 + 0.5, -0.25 - 0.5, -0.5 - 0.5];
+    var z = [-1.5, -0.5, 0.5, 1.5];
+
+    var horiz_x = [];
+    var horiz_y = [];
+    var vert_z = [];
+
+    var vert_x = [];
+    var vert_y = [];
+    var vert_z = [];
+
+    var n = 4;
+    var m = 4;
+
+    for (var i = 0; i < n; i++) {
+      line_points.push(new THREE.Vector3(
+        // r * Math.sin(deg_to_rad(half_theta_x / (i - (n / 2)))),
+        x[i] * 0.5,
+        y[0] * 0.5,
+        // r * Math.sin(deg_to_rad(half_theta_y)),
+        z[i] * 0.5
+        // r * Math.cos(deg_to_rad(half_theta_x / (i - (n / 2))))
+      ));
+    }
+
+    for (var i = 0; i < 4; i++) {
+      line_points.push(new THREE.Vector3(
+        x[0] * 0.5,
+        y[i] * 0.5,
+        -z[0] * 0.5
+      ));
+    }
+
+
+    for (var i = 0; i < n; i++) {
+      line_points.push(new THREE.Vector3(
+        x[i] * 0.5,
+        -y[0] * 0.5,
+        -z[i] * 0.5
+      ));
+    }
+
+    for (var i = 0; i < n; i++) {
+      line_points.push(new THREE.Vector3(
+        x[0] * 0.5,
+        y[i] * 0.5,
+        z[0] * 0.5
+      ));
+    }
+
+    var line_geometry = new THREE.BufferGeometry().setFromPoints(line_points);
+
+    var line = new THREE.Line(line_geometry, line_mat);
+    scene.add(line);
+    // line.rotateY(deg_to_rad(180));
+    // line.rotate
 
     function get_star_data(stars_arr, median_magnitude, base_size) {
 
@@ -604,7 +673,7 @@
         // Calculate size
         mag = star_data[3];
         size = -1 * mag + 6;
-        console.log(size);
+        // console.log(size);
         // size = base_size * (2.5);
         // size = (8 - mag);
         star_sizes.push(size);
@@ -630,8 +699,8 @@
         // star_colors.push([color.r, color.g, color.b]);
         star_colors.push(color.r, color.g, color.b);
         // color.toArray(star_colors, i * 3);
-        if (i == 5) console.log(star_colors);
-        if (i == 1) console.log(star_colors[0]);
+        // if (i == 5) console.log(star_colors);
+        // if (i == 1) console.log(star_colors[0]);
 
         // Unique, random twinkle phase shift
         twinkle_offset = Math.random() * 10
@@ -646,8 +715,8 @@
     var brightest_stars_geometry = new THREE.BufferGeometry();
     var brightest_stars_data = get_star_data(brightest_stars_arr, 0., 3. * 0.001);
 
-    console.log(brightest_stars_data.positions.length);
-    console.log(brightest_stars_data.colors.length);
+    // console.log(brightest_stars_data.positions.length);
+    // console.log(brightest_stars_data.colors.length);
 
     brightest_stars_geometry.setAttribute('position', new THREE.Float32BufferAttribute(brightest_stars_data.positions, 3));
     // brightest_stars_geometry.colors = brightest_stars_data.colors
@@ -756,6 +825,19 @@
       // unit.position.z = -2 / Math.sqrt(2);
 
       scene.add(unit);
+      var dec_axis = unit.getObjectByName("empty_dec", true); // aka head unit
+      // line.x -= dec_axis.getWorldPosition.x;
+      // console.log(line.position.x)
+      // line.position.z += 0.25;
+      // line.position.y -= 5;
+      // console.log(line.position.x)
+      // console.log(dec_axis.getWorldPosition)
+      // line.y -= dec_axis.getWorldPosition.y;
+      // line.z -= dec_axis.getWorldPosition.z;
+      // line.updateMatrixWorld();
+      // dec_axis.updateMatrixWorld();
+      // line.parent = dec_axis;
+      // line.scale.set(6.2, 6.2, 6.2);
     }
 
     function onLoadControlBox(gltf) {
@@ -776,7 +858,7 @@
 
       var cube_bbox = new THREE.Box3();
       cube_bbox.setFromObject(sky);
-      console.log(cube_bbox.max.y - cube_bbox.min.y);
+      // console.log(cube_bbox.max.y - cube_bbox.min.y);
     }
 
     function onLoad(gltf) {
@@ -870,6 +952,12 @@
         ra_axis.rotation.x = deg_to_rad(guiControls.RA);
         dec_axis.rotation.y = deg_to_rad(guiControls.Dec);
         lat.rotation.z = deg_to_rad(guiControls.Latitude) * -1;
+
+
+        line.rotation.x = deg_to_rad(guiControls.RA);
+        line.rotation.y = deg_to_rad(180 + guiControls.Dec);
+        line.rotation.z = deg_to_rad(guiControls.Latitude);
+
       }
 
       // Update sun position
