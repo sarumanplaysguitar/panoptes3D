@@ -199,6 +199,7 @@
 
     }
     `
+
     const sky_vshader = `
     varying vec3 final_mix;
     uniform vec3 u_ground;
@@ -953,11 +954,10 @@
         dec_axis.rotation.y = deg_to_rad(guiControls.Dec);
         lat.rotation.z = deg_to_rad(guiControls.Latitude) * -1;
 
-
+        
         line.rotation.x = deg_to_rad(guiControls.RA);
-        line.rotation.y = deg_to_rad(180 + guiControls.Dec);
+        line.rotation.y = deg_to_rad(guiControls.Dec  + 180) * 1;
         line.rotation.z = deg_to_rad(guiControls.Latitude);
-
       }
 
       // Update sun position
