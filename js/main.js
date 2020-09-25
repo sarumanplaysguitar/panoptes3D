@@ -220,9 +220,9 @@ void main(void) {
 
 // FPS stats (by mrdoob) 📊
 
-var stats = new Stats();
-document.body.appendChild(stats.dom);
-requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) });
+// var stats = new Stats();
+// document.body.appendChild(stats.dom);
+// requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) });
 
 
 // Camera settings 🎥
@@ -916,6 +916,7 @@ var guiControls = new function () {
 }
 
 var gui = new dat.GUI();
+gui.closed = true;
 gui.add(guiControls, 'RA', -180, 180);
 gui.add(guiControls, 'Dec', -180, 180);
 gui.add(guiControls, 'Latitude', 0, 90);
