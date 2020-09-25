@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 
+<!-- This page is identical to the default index.html, 
+    save for changes made in the JS allowing for mediump device support -->
+
 <head>
   <meta charset="UTF-8">
   <title>panoptes3D (Demo)</title>
@@ -62,7 +65,7 @@
       text-align: center;
       color: rgba(255,255,255,0.5);
       font-family: Helvetica, Arial, sans-serif;
-      font-size: 14px;
+      font-size: 0.8em;
     }
 
     .info a:link, a:visited {
@@ -95,9 +98,9 @@
       text-decoration: none;
       cursor: pointer;
       /* font-kerning: normal; */
-      letter-spacing: 1.6px;
-      font-size: 16px;
-      padding: 4px;
+      letter-spacing: 0.1em;
+      font-size: 1.25em;
+      padding: 0.25em;
     }
   </style>
 </head>
@@ -114,7 +117,9 @@
         <span class="button" onclick="window.open('https://panoptesvr.herokuapp.com', '_blank');">🥽 View this in VR </span>
         <span class="button" onclick="window.open('https://forms.gle/de5WqbeoLCwtQP486', '_blank');">💌 Get updates & become a beta tester!</span>
         <span class="button" onclick="window.open('https://projectpanoptes.org', '_blank');">🌟 Learn more about Project PANOPTES</span>
-        <p>Model textures not loading? Click <a href="https://panoptes3d.herokuapp.com/experimental.html">here</a>.</p>
+        <p>Model textures still not loading on your device?
+            <br>
+            This is a bug! Please <a href="https://projectpanoptes.org/contact">contact us</a> to report it.</p>
         <p>
         <img src="/assets/logo_white.png" width="35px">
         <br>© 2020 <span class="logo" onclick="window.open('https://projectpanoptes.org', '_blank');">Project PANOPTES</span>
@@ -135,7 +140,7 @@
   
   <script type="text/javascript" src="data/mag_5_stars.js"></script>
   <!-- <script type="text/javascript" src="js/SceneManager.js"></script> -->
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/experimental.js"></script>
 </body>
 
 </html>
