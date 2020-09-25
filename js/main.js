@@ -15,13 +15,23 @@ function degreesToRadians(angle) {
     return angle * PI / 180;
 }
 
+function smoothstep(x, t1, t2) {
+    let k = Math.max(0, Math.min(1, (x - t1)/(t2 - t1)));
+    let s = k**2 * (3-2*k);
+
+    return s;
+}
+
+// Variable to keep track of scene opacity and change it, if needed
+let envOpacity = 1.0;
+
 // ^ Does the debug stuff belong in here? probably
 
 // Astronomical positions and data 🌙
 // (get from API later)
 // These are in degrees.
-var sunAltitude = -49.;
-var previousSunAltitude = -49.;
+var sunAltitude = -10.3;
+var previousSunAltitude = sunAltitude;
 var sidereal = 0.;
 var unitLatitude = 34.;
 
@@ -107,7 +117,7 @@ void main() {
 
     // gl_PointSize = (size + 25. * pow(size, 3.) * sin(10. * u_time + twinkle_offset)) * attenuation_factor;
     // gl_PointSize = (size + 25. * pow(size, 3.) * sin(10. * u_time + twinkle_offset)) * attenuation_factor;
-    gl_PointSize = 1. * size * attenuation_factor;
+    gl_PointSize = 1. * size * attenuation_factor + sin(10. * u_time + twinkle_offset) * 0.15 * size;
     gl_Position = projectionMatrix * mvPosition;
     glpos = gl_Position;
     mv_origin = modelViewMatrix * vec4(0., 0., 0., 1.0);
@@ -238,9 +248,9 @@ controls.update();
 // Scene setup 🖼
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x00003f, -20, 20);
+// scene.fog = new THREE.Fog(0x00003f, -20, 20);
 scene.background = new THREE.Color(0x3A3A3A);
-// scene.fog = new THREE.Fog(0xffffff, 0, 5);
+scene.fog = new THREE.Fog(0xffffff, -7, 20);
 
 
 
@@ -385,6 +395,8 @@ const sun_thresholds = [90, 50, -5, -10, -13, -16, -18, -90];
 function blend_sky_colors(sunAltitude, sun_thresholds, sky_colors) {
     // Returns array of linearly interpolated sky colors (one for each degree breakpoint in sun_thresholds)
     // based on sun's altitude, and blended from a few key, preset sky colors/edge cases (hex codes in sky_colors)
+    // Also blends fog and ambient light colors, and sets fog strength to increase after sunset
+
     var sky_color_lerp_array = [];
     var num_thresholds = sun_thresholds.length;
     // console.log(sky_colors);
@@ -406,7 +418,10 @@ function blend_sky_colors(sunAltitude, sun_thresholds, sky_colors) {
             sky_color_lerp_array.push(key_color);
 
             // Update fog color if color calculated was ground (first entry in color table)
-            if (j == 0) scene.fog.color = key_color;
+            if (j == 0) {
+                scene.fog.color = key_color;
+                scene.fog.near = -10 + -22 * smoothstep(sunAltitude, 5, -19);
+            }
             if (j == 0) ambient_light.color.set(key_color);
         }
         } else {
@@ -431,7 +446,10 @@ function blend_sky_colors(sunAltitude, sun_thresholds, sky_colors) {
             sky_color_lerp_array.push(blend_color)
 
             // Update fog color if color calculated was ground (first entry in color table)
-            if (j == 0) scene.fog.color = blend_color;
+            if (j == 0) {
+                scene.fog.color = blend_color;
+                scene.fog.near = -10 + -22 * smoothstep(sunAltitude, 5, -19);
+            }
             if (j == 0) ambient_light.color.set(blend_color);
         }
         }
@@ -742,7 +760,7 @@ var ground_geometry = new THREE.PlaneBufferGeometry(7.4 * (env_scale_fac * 0.4),
 var ground_test = new THREE.Mesh(ground_geometry, ground_material);
 ground_test.position.y = -0.01;
 ground_test.rotateX(-PI / 2);
-scene.add(ground_test);
+// scene.add(ground_test);
 // ground_test.visible = false;
 
 var sky_geometry = new THREE.SphereBufferGeometry(3.7 * env_scale_fac, 50, 26);
@@ -758,10 +776,13 @@ scene.add(axesHelper);
 
 var loader = new GLTFLoader();
 
-var unit, mesh, clouds, sky, control_box;
+var unit, mesh, clouds, sky, control_box, environment;
+
+let groundObjects = new Array();
 
 loader.load('assets/unit.glb', onLoadUnit);
 loader.load('assets/control_box.glb', onLoadControlBox);
+// loader.load('assets/environments/snow/snow_smooth.glb', onLoadEnvironment);
 // loader.load('assets/placeholder_sky.glb', onLoadSky);
 // loader.load('assets/placeholder_ground.glb', onLoad);
 loader.load('assets/placeholder_clouds.glb', onLoadClouds);
@@ -790,13 +811,39 @@ function onLoadUnit(gltf) {
 }
 
 function onLoadControlBox(gltf) {
-    // console.log(gltf);
+    let num_components = gltf.scene.children.length;
     control_box = gltf.scene;
     control_box.position.x = -2 / Math.sqrt(2);
     control_box.position.z = -1 / Math.sqrt(2);
     control_box.rotateY(degreesToRadians(145.));
 
+    for (let i=0; i < num_components; i++) {
+        let component = gltf.scene.children[i];
+
+        component.material.transparent = true;
+        component.material.opacity = 1.;
+    }
+    // um maybe traverse model instead ^ but this works anyhow
+
     scene.add(control_box);
+}
+
+function onLoadEnvironment(gltf) {
+    let num_components = gltf.scene.children.length;
+    environment = gltf.scene;
+    // environment.position.x = -2 / Math.sqrt(2);
+    // environment.position.z = -1 / Math.sqrt(2);
+    // environment.rotateY(degreesToRadians(145.));
+
+    for (let i=0; i < num_components; i++) {
+        let component = gltf.scene.children[i];
+
+        component.material.transparent = true;
+        component.material.opacity = 1.;
+    }
+    // um maybe traverse model instead ^ but this works anyhow
+
+    scene.add(environment);
 }
 
 function onLoadSky(gltf) {
@@ -826,6 +873,34 @@ function onLoadClouds(gltf) {
 
     scene.add(clouds);
 }
+
+function setStarVisibility() {
+    if (sunAltitude < -8) {
+        brightest_stars.visible = true;
+    } else {
+        brightest_stars.visible = false;
+    }
+
+    if (sunAltitude < -10) {
+        bright_stars.visible = true;
+    } else {
+        bright_stars.visible = false;
+    }
+
+    if (sunAltitude < -13) {
+        average_stars.visible = true;
+    } else {
+        average_stars.visible = false;
+    }
+
+    if (sunAltitude < -18) {
+        faint_stars.visible = true;
+    } else {
+        faint_stars.visible = false;
+    }
+}
+
+setStarVisibility();
 
 
 // Demo input GUI 🕹
@@ -860,27 +935,47 @@ function bindEventListeners() {
     resizeCanvas();
 }
 
+// Helper function: fade
+function updateOpacity(obj, newOpacity) {
+
+    // obj.material.transparent = true;
+
+    if (newOpacity == 0.) {
+        obj.visible = false;
+    } else {
+        obj.visible = true;
+        obj.traverse(n => { if ( n.isMesh ) {
+                n.material.opacity = newOpacity;
+            }
+        })
+    // obj.material.opacity = newOpacity;
+    }
+}
+
 
 // Resize canvas with window ↗️
 
 function resizeCanvas() {
+    const canvas = renderer.domElement;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    console.log(`canvas dimensions: ${width}x${height} (${width / height})`);
-
-    // Below: put in SceneManager update method
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    // Below: Put in respective object update methods
-    sky_uniforms.u_resolution.value.x = width;
-    sky_uniforms.u_resolution.value.y = height;
-    ground_uniforms.u_resolution.value.x = width;
-    ground_uniforms.u_resolution.value.y = height;
-    stars_uniforms.u_resolution.value.x = width;
-    stars_uniforms.u_resolution.value.y = height;
+    if (canvas.width !== width || canvas.height !== height) {
+      console.log(`canvas dimensions: ${width}x${height}; aspect ratio: ${Math.round(width / height * 100) / 100}`)
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      sky_uniforms.u_resolution.value.x = width;
+      sky_uniforms.u_resolution.value.y = height;
+      ground_uniforms.u_resolution.value.x = width;
+      ground_uniforms.u_resolution.value.y = height;
+      stars_uniforms.u_resolution.value.x = width;
+      stars_uniforms.u_resolution.value.y = height;
+    }
 }
+
+// Generic reference world-position vector
+var wpVector = new THREE.Vector3();
 
 
 // Animate here 🎬
@@ -940,29 +1035,7 @@ function animate(time) {
         previousSunAltitude = sunAltitude;
         console.log(sunAltitude);
 
-        if (sunAltitude < -8) {
-            brightest_stars.visible = true;
-        } else {
-            brightest_stars.visible = false;
-        }
-
-        if (sunAltitude < -10) {
-            bright_stars.visible = true;
-        } else {
-            bright_stars.visible = false;
-        }
-
-        if (sunAltitude < -13) {
-            average_stars.visible = true;
-        } else {
-            average_stars.visible = false;
-        }
-
-        if (sunAltitude < -18) {
-            faint_stars.visible = true;
-        } else {
-            faint_stars.visible = false;
-        }
+        setStarVisibility();
     }
 
 
@@ -1006,6 +1079,24 @@ function animate(time) {
             axesHelper.visible = false;
         }
     }
+
+    // if(control_box) {
+    //     let cameraY = camera.getWorldPosition(wpVector).y;
+    //     cameraY = Math.round(cameraY * 100) / 100;
+    //     // console.log(cameraY);
+
+    //     if (cameraY < -0.01 && envOpacity >= 0.1) {
+    //         envOpacity < 0.2 ? envOpacity = 0. : envOpacity -= 0.1;
+    //         updateOpacity(control_box, envOpacity);
+    //         updateOpacity(environment, envOpacity);
+    //     } else if (cameraY > -0.01 && envOpacity <= 0.9) {
+    //         envOpacity > 0.8 ? envOpacity = 1. : envOpacity += 0.1;
+    //         updateOpacity(control_box, envOpacity);
+    //         updateOpacity(environment, envOpacity);
+    //     }
+
+    //     // console.log(envOpacity);
+    // }
 
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
