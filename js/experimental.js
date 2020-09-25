@@ -780,7 +780,7 @@ var unit, mesh, clouds, sky, control_box, environment;
 
 let groundObjects = new Array();
 
-loader.load('assets/unit.glb', onLoadUnit);
+loader.load('assets/unit_exp.glb', onLoadUnit);
 loader.load('assets/control_box.glb', onLoadControlBox);
 // loader.load('assets/environments/snow/snow_smooth.glb', onLoadEnvironment);
 // loader.load('assets/placeholder_sky.glb', onLoadSky);
