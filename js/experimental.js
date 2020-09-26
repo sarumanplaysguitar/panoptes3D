@@ -32,7 +32,7 @@ let envOpacity = 1.0;
 // These are in degrees.
 var sunAltitude = -10.3;
 var previousSunAltitude = sunAltitude;
-var sidereal = 0.;
+var diurnal = 0.;
 var unitLatitude = 34.;
 
 // stars data was imported from data/mag_5_stars.js in stars_arr
@@ -43,7 +43,7 @@ var unitLatitude = 34.;
 const stars_vshader = `
 // This shader...
 // 1) rotates vertices about z axis with latitude
-// 2) rotates vertices about y axis with siderial time
+// 2) rotates vertices about y axis with siderial time (diurnal motion)
 // 3) sets star point size
 // 4) calculates some info for the fragment shader's cutoffs
 
@@ -81,7 +81,7 @@ uniform vec2 u_resolution;
 attribute float size;
 attribute float twinkle_offset;
 uniform float u_time;
-uniform float u_sidereal;
+uniform float u_diurnal;
 varying vec4 mvPosition;
 varying vec3 pos;
 varying vec4 glpos;
@@ -107,7 +107,7 @@ void main() {
     // Correct for the offset between how unit's latitude=0 (horizon)
     // and star's default positions (NCP at zenith) were defined
 
-    pos = rotation_matrix_y(u_sidereal) * position;
+    pos = rotation_matrix_y(u_diurnal) * position;
     pos = rotation_matrix_z(u_unitLatitude + PI_2) * pos;
     mvPosition = modelViewMatrix * vec4(pos, 1.0);
     float camera_dist = distance(mvPosition, origin);
@@ -517,7 +517,7 @@ const ground_material = new THREE.ShaderMaterial({
 
 const stars_uniforms = {
     u_time: { value: 0.0 },
-    u_sidereal: { value: 0.0 },
+    u_diurnal: { value: 0.0 },
     u_resolution: { value: { x: window.innerWidth, y: window.innerHeight } },
     u_scale: { value: window.innerHeight / 2. },
     u_unitLatitude: { value: -1. * degreesToRadians(unitLatitude) }
@@ -909,7 +909,7 @@ var guiControls = new function () {
     this.RA = -40.;
     this.Dec = 88.;
     this.Latitude = unitLatitude;
-    this.Sidereal = 0.;
+    this.Diurnal = 0.;
     this.Sun = sunAltitude;
     this.Cloudy = false;
     this.Axes = false;
@@ -920,7 +920,7 @@ gui.closed = true;
 gui.add(guiControls, 'RA', -180, 180);
 gui.add(guiControls, 'Dec', -180, 180);
 gui.add(guiControls, 'Latitude', 0, 90);
-gui.add(guiControls, 'Sidereal', 0, 360)
+gui.add(guiControls, 'Diurnal', 0, 360)
 gui.add(guiControls, 'Sun', -90, 90);
 gui.add(guiControls, 'Cloudy');
 gui.add(guiControls, 'Axes');
@@ -1049,12 +1049,12 @@ function animate(time) {
     unitLatitude = guiControls.Latitude;
     }
 
-    // Rotate stars :D (ie. depending on time of year and your longitude)
-    // if (sidereal != guiControls.Sidereal) {
-    //   stars_uniforms.u_sidereal = degreesToRadians(guiControls.Sidereal);
-    //   sidereal = guiControls.Sidereal;
-    //   console.log(sidereal);
-    // }
+    // Rotate stars :D (ie. depending time and your longitude)
+    if (diurnal != guiControls.Diurnal) {
+      stars_uniforms.u_diurnal.value = degreesToRadians(guiControls.Diurnal);
+      diurnal = guiControls.Diurnal;
+      console.log(diurnal);
+    }
 
     // I think the below weather and debugging stuff belong (or at least need to be called) in SceneManager too
 
