@@ -909,8 +909,8 @@ var guiControls = new function () {
     this.RA = -40.;
     this.Dec = 88.;
     this.Latitude = unitLatitude;
-    this.Diurnal = 0.;
     this.Sun = sunAltitude;
+    this.Diurnal = 0.;
     this.Cloudy = false;
     this.Axes = false;
 }
@@ -920,8 +920,8 @@ gui.closed = true;
 gui.add(guiControls, 'RA', -180, 180);
 gui.add(guiControls, 'Dec', -180, 180);
 gui.add(guiControls, 'Latitude', 0, 90);
-gui.add(guiControls, 'Diurnal', 0, 360)
 gui.add(guiControls, 'Sun', -90, 90);
+gui.add(guiControls, 'Diurnal', 0, 360);
 gui.add(guiControls, 'Cloudy');
 gui.add(guiControls, 'Axes');
 
