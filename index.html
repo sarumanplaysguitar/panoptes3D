@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>panoptes3D (Demo)</title>
+  <title>PANOPTES Unit Simulator</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@400&display=swap');
 
@@ -36,7 +36,15 @@
     }
 
     .frame>* {
-      flex: 1 1 100%;
+      flex: 1 1;
+    }
+
+    .container {
+      flex-grow: 2;
+    }
+
+    .ui {
+      flex-grow: 1;
     }
 
     canvas {
@@ -52,7 +60,7 @@
 
     .info {
       /* display: none; */
-      width: 50%;
+      width: 66.6%;
       z-index: 10;
       position: absolute;
       margin: auto;
@@ -102,8 +110,62 @@
     }
 
     .ui {
-      background-color: red;
+      background-color: #3A3A3A;
+      padding: 20px 50px;
+      word-wrap: break-word;
+      /* text-align: center; */
+      color: rgba(255,255,255,0.7);
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 20px;
+      overflow-y: auto;
     }
+
+    .ui>h1,h2,h3,h4,h5 {
+      color: rgba(173,224,255,1.0);
+    }
+
+    .infobox {
+      padding: 10px;
+      margin-bottom: 20px;
+      background-color: rgba(255,255,255,0.1);
+      font-size: 0.65em;
+      min-height: 50px;
+      cursor: pointer;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      border-radius: 10px;
+      transition: all ease 0.5s;
+    }
+
+    .infobox:hover {
+      color: white;
+      background: rgba(173,177,255,0.25);
+      transition: all ease 0.5s;
+      /* border: 1px solid rgba(255,255,255, 0.5);
+      color: rgba(255,255,255,0.75) */
+    }
+
+    .infobox-icon {
+      width: 50px;
+      float: left;
+      margin-right: 10px;
+      border-radius: 5px;
+    }
+
+    hr {
+      /* margin: 1em 0;  */
+      margin-top: 20px;
+      margin-bottom: 20px;
+      background-color: #4f4f4f;
+      display: block; 
+      height: 1px;
+      border: 0; 
+      border-top: 1px solid #4f4f4f;
+      padding: 0;
+    }
+
   </style>
 </head>
 
@@ -111,31 +173,49 @@
 
   <div class="frame">
     <div class="ui">
-      yo.
-      Lorem ipsum dolor sit amet consectetur adipisicing elit. Ducimus non fugiat distinctio. Quidem consequatur voluptatum, commodi in cupiditate rerum illum nostrum natus culpa hic! Dignissimos ipsa a qui eos autem.
+      <h3>PANOPTES Unit Simulator</h3>
+      <p>Try operating a PANOPTES unit! See how these buttons control the telescope mount movement. 🔭</p>
+      <h4>Right Ascension</h4>
+      <span class="button" id="uiraup" onclick="fml_ra(15);">⮝</span><span class="button" id="uiradown" onclick="fml_ra(-15);">⮟</span>
+      <h4>Declination</h4>
+      <span class="button" id="uidecup" onclick="fml_dec(15);">⮝</span><span class="button" id="uidecdown" onclick="fml_dec(-15);">⮟</span>
+      <!-- <h4>Latitude</h4>
+      <span class="button" id="uidecup" onclick="fml_lat(5);">⮝</span><span class="button" id="uidecdown" onclick="fml_lat(-5);">⮟</span> -->
+      <br>
+      <br>
+      By adjusting these 2 settings, the unit can aim at any star in the sky. ✨
+      <p>You can change the time of day, too!</p>
+      <h4>Time of Day</h4>
+      <span class="button" id="uinight" onclick="fml(-25);">Night 🌛</span><span class="button" id="uiday" onclick="day()">Day 🌞</span>
+      <br>
+      <br>
+      Notice that the unit faces down during the day. It sleeps like this during the day to protect its cameras from the sun! 🌞
+      <hr>
+      <div class="infobox" onclick="window.open('https://www.youtube.com/playlist?list=PLe0ZP062K7bQFYO1z8sWQyq5XLR5j4tTK','_blank');" type="button">
+        <img class="infobox-icon" src="assets/exoplanet.gif">
+        <b>PANOPTES @ EYU 2020 🌟🌐</b>
+        Want to learn more about exoplanets and PANOPTES units? Check out our <u>EYU 2020 YouTube playlist</u> here!</div>
+      <div class="infobox" onclick="window.open('https://projectpanoptes.org/','_blank');" type="button">
+        <img class="infobox-icon" src="assets/lol.png" onclick="window.open('google.com','_blank');" type="button">
+        <b>Get Involved 👷‍♀️🔨</b> Learn more about building a real-life PANOPTES robot at <u>projectpanoptes.org</u>. 
+      </div>
+      <br>
     </div>
     <div class="container">
       <canvas id="canvas3d"></canvas>
       <div class="info">
-        This is a work-in-progress tool for viewing 
-        <br>the status of a given PANOPTES unit.
-        <br><br>
-        <span class="button" onclick="window.open('https://panoptesvr.herokuapp.com', '_blank');">😎 View this in VR </span>
-        <span class="button" onclick="window.open('https://forms.gle/de5WqbeoLCwtQP486', '_blank');">💌 Get updates & become a beta tester!</span>
-        <span class="button" onclick="window.open('https://projectpanoptes.org', '_blank');">🌟 Learn more about Project PANOPTES</span>
-        <p>Model textures not loading? Click <a href="https://panoptes3d.herokuapp.com/experimental.html">here</a>.</p>
-        <p>
-        <img src="/assets/logo_white.png" width="50px">
-        <br>© 2020 <span class="logo" onclick="window.open('https://projectpanoptes.org', '_blank');">Project PANOPTES</span>
-        <br>
+        <img src="/assets/logo_white.png" width="45px">
+        <br>© 2020<span class="logo" onclick="window.open('https://projectpanoptes.org', '_blank');">Project PANOPTES</span>
+        <br><br><br>
       </div>
     </div>
   </div>
 
-  <script type="module" src="js/libs/three/build/three.module.js"></script>
-  <script type="module" src="js/libs/three/examples/jsm/controls/OrbitControls.js"></script>
-  <script type="module" src="js/libs/three/examples/jsm/loaders/GLTFLoader.js"></script>
-  <script type="module" src="js/libs/three/examples/jsm/loaders/RGBELoader.js"></script>
+  <!-- <script type="module" src="js/libs/three/build/three.module.js"></script> -->
+  <script type="text/javascript" src="js/three.min.js"></script>
+  <script type="text/javascript" src="js/OrbitControls.js"></script>
+  <script type="text/javascript" src="js/GLTFLoader.js"></script>
+  <script type="text/javascript" src="js/RGBELoader.js"></script>
   <!-- <script type="module" src="js/libs/three/examples/jsm/webxr/VRButton.js"></script> -->
 
   <script type="text/javascript" src="js/libs/dat.gui.min.js"></script>
@@ -144,7 +224,13 @@
   
   <script type="text/javascript" src="data/mag_5_stars.js"></script>
   <!-- <script type="text/javascript" src="js/SceneManager.js"></script> -->
-  <script type="module" src="js/main.js"></script>
+  <script type="text/javascript" src="js/main.js"></script>
+  <script type="text/javascript">
+    // window.onload = function start() {
+    //   document.getElementById("uinight").addEventListener("click", fml(-25), false);
+    //   document.getElementById("uiday").addEventListener("click", fml(80), false); 
+    // }
+  </script>
 </body>
 
 </html>

@@ -1,7 +1,7 @@
-import * as THREE from '/js/libs/three/build/three.module.js';
-import { OrbitControls } from '/js/libs/three/examples/jsm/controls/OrbitControls.js';
-import { RGBELoader } from '/js/libs/three/examples/jsm/loaders/RGBELoader.js';
-import { GLTFLoader } from '/js/libs/three/examples/jsm/loaders/GLTFLoader.js';
+// import * as THREE from '/js/libs/three/build/three.module.js';
+// import { OrbitControls } from '/js/libs/three/examples/jsm/controls/OrbitControls.js';
+// import { RGBELoader } from '/js/libs/three/examples/jsm/loaders/RGBELoader.js';
+// import { GLTFLoader } from '/js/libs/three/examples/jsm/loaders/GLTFLoader.js';
 
 console.log(`using three.js r${THREE.REVISION}`);
 
@@ -30,7 +30,8 @@ let envOpacity = 1.0;
 // Astronomical positions and data 🌙
 // (get from API later)
 // These are in degrees.
-var sunAltitude = -10.3;
+// var sunAltitude = -10.3;
+var sunAltitude = -18.5;
 var previousSunAltitude = sunAltitude;
 var diurnal = 0.;
 var unitLatitude = 34.;
@@ -235,7 +236,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40 * 2);
 console.log(`focal length: ${Math.round(camera.getFocalLength())}`);
 camera.position.set(3, 0.6, 3);
-var controls = new OrbitControls(camera, renderer.domElement);
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0.5, 0);
 controls.enablePan = false;
 controls.minDistance = 1.5;
@@ -280,7 +281,7 @@ scene.add(ambient_light);
 // HDRI 🌇
 
 var pmremGenerator = new THREE.PMREMGenerator(renderer);
-new RGBELoader()
+new THREE.RGBELoader()
     .setDataType(THREE.UnsignedByteType)
     .setPath('assets/hdri/')
     .load('placeholder_sunset.hdr', function (texture) {
@@ -774,7 +775,7 @@ scene.add(sky_test);
 var axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
 
-var loader = new GLTFLoader();
+var loader = new THREE.GLTFLoader();
 
 var unit, mesh, clouds, sky, control_box, environment;
 
@@ -916,7 +917,9 @@ var guiControls = new function () {
 }
 
 var gui = new dat.GUI();
+dat.GUI.toggleHide();
 gui.closed = true;
+// gui.toggleHide();
 gui.add(guiControls, 'RA', -180, 180);
 gui.add(guiControls, 'Dec', -180, 180);
 gui.add(guiControls, 'Latitude', 0, 90);
@@ -926,7 +929,145 @@ gui.add(guiControls, 'Cloudy');
 gui.add(guiControls, 'Axes');
 
 
+// var ui_ra_current, ui_ra_new;
+// var ui_dec_current, ui_dec_new;
+// var ui_lat_current, ui_lat_new;
+// var ui_sun_current, ui_sun_new;
+// var ui_diurnal;
 
+// var need_to_park = false;
+function day() {
+    // need_to_park = true;
+    park_unit();
+    fml(40);
+}
+
+function park_unit() {
+    // console.log(guiControls.RA)
+    if (guiControls.RA <= -90) {
+        fml_ra(15);
+        if (guiControls.RA <= -90) {
+            park_unit();
+            // console.log('parking...')
+        }
+    } else if (guiControls.RA >= -70) {
+        fml_ra(-15);
+        if (guiControls.RA >= -70) {
+            park_unit();
+            // console.log('parking...')
+        }
+    }
+
+    // console.log(guiControls.RA)
+    if (guiControls.Dec <= -110) {
+        fml_dec(15);
+        if (guiControls.Dec <= -110) {
+            park_unit();
+            // console.log('parking...')
+        }
+    } else if (guiControls.Dec >= -90) {
+        fml_dec(-15);
+        if (guiControls.Dec >= -90) {
+            park_unit();
+            // console.log('parking...')
+        }
+    }
+}
+
+var notgood_fml = false;
+function fml(target) {
+    // console.log('goteem')
+    if (target == -25) {
+        if (guiControls.Sun > target) {
+            guiControls.Sun -= 0.5;
+            notgood_fml = target;
+        } else {
+            notgood_fml = false;
+        }
+    }
+    else if (target == 40) {
+        if (guiControls.Sun < target) {
+            guiControls.Sun += 0.5;
+            notgood_fml = target;
+        } else {
+            notgood_fml = false;
+        }
+    }
+}
+
+var notgood_ra = false;
+var og_ra = guiControls.RA;
+function fml_ra(target) {
+    // console.log(guiControls.RA)
+    if (target == -15) {
+        if (guiControls.RA > og_ra + target) {
+            guiControls.RA -= 1;
+            notgood_ra = target;
+        } else {
+            notgood_ra = false;
+            og_ra = guiControls.RA;
+        }
+    }
+    else if (target == 15) {
+        if (guiControls.RA < og_ra + target) {
+            guiControls.RA += 1;
+            notgood_ra = target;
+        } else {
+            notgood_ra = false;
+            og_ra = guiControls.RA;
+        }
+    }
+}
+
+var notgood_dec = false;
+var og_dec = guiControls.Dec;
+function fml_dec(target) {
+    // console.log(guiControls.Dec)
+    if (target == -15) {
+        if (guiControls.Dec > og_dec + target) {
+            guiControls.Dec -= 1;
+            notgood_dec = target;
+        } else {
+            notgood_dec = false;
+            og_dec = guiControls.Dec;
+        }
+    }
+    else if (target == 15) {
+        if (guiControls.Dec < og_dec + target) {
+            guiControls.Dec += 1;
+            notgood_dec = target;
+        } else {
+            notgood_dec = false;
+            og_dec = guiControls.Dec;
+        }
+    }
+}
+
+var notgood_lat = false;
+var og_lat = guiControls.Latitude;
+function fml_lat(target) {
+    // console.log(guiControls.Latitude)
+    if (target == -5) {
+        if (guiControls.Latitude > og_lat + target) {
+            guiControls.Latitude -= 1;
+            notgood_lat = target;
+        } else {
+            notgood_lat = false;
+            og_lat = guiControls.Latitude;
+        }
+    }
+    else if (target == 5) {
+        if (guiControls.Latitude < og_lat + target) {
+            guiControls.Latitude += 1;
+            notgood_lat = target;
+        } else {
+            notgood_lat = false;
+            og_dec = guiControls.Latitude;
+        }
+    }
+}
+
+// fml(-25);
 
 
 // Controls ⌨
@@ -941,16 +1082,15 @@ function updateOpacity(obj, newOpacity) {
 
     // obj.material.transparent = true;
 
-    if (newOpacity == 0.) {
-        obj.visible = false;
-    } else {
-        obj.visible = true;
-        obj.traverse(n => { if ( n.isMesh ) {
-                n.material.opacity = newOpacity;
-            }
-        })
-    // obj.material.opacity = newOpacity;
-    }
+    // if (newOpacity == 0.) {
+    //     obj.visible = false;
+    // } else {
+    //     obj.visible = true;
+    //     obj.traverse(n => { if ( n.isMesh ) {
+    //             n.material.opacity = newOpacity;
+    //         }
+    //     })
+    // }
 }
 
 
@@ -978,6 +1118,8 @@ function resizeCanvas() {
 // Generic reference world-position vector
 var wpVector = new THREE.Vector3();
 
+guiControls.Diurnal = guiControls.Diurnal + 5
+
 
 // Animate here 🎬
 
@@ -1003,6 +1145,22 @@ function animate(time) {
     var lat;
     var mount;
     var pier;
+
+    if(notgood_fml) {
+        fml(notgood_fml);
+    }
+
+    if(notgood_ra) {
+        fml_ra(notgood_ra);
+    }
+
+    if(notgood_dec) {
+        fml_dec(notgood_dec);
+    }
+
+    if(notgood_lat) {
+        fml_dec(notgood_lat);
+    }
 
     if (unit) {
         dec_axis = unit.getObjectByName("empty_dec", true); // aka head unit
@@ -1034,7 +1192,7 @@ function animate(time) {
         update_colors(sky_uniforms, ground_uniforms, blend_sky_colors(sunAltitude, sun_thresholds, sky_colors));
         // console.log(sunAltitude);
         previousSunAltitude = sunAltitude;
-        console.log(sunAltitude);
+        // console.log(sunAltitude);
 
         setStarVisibility();
     }
@@ -1050,11 +1208,19 @@ function animate(time) {
     }
 
     // Rotate stars :D (ie. depending time and your longitude)
+    // if (diurnal != guiControls.Diurnal) {
+    //   stars_uniforms.u_diurnal.value = degreesToRadians(guiControls.Diurnal);
+    //   diurnal = guiControls.Diurnal;
+    //   console.log(diurnal);
+    // }
+    
     if (diurnal != guiControls.Diurnal) {
-      stars_uniforms.u_diurnal.value = degreesToRadians(guiControls.Diurnal);
-      diurnal = guiControls.Diurnal;
-      console.log(diurnal);
-    }
+        stars_uniforms.u_diurnal.value = degreesToRadians(guiControls.Diurnal);
+        diurnal = guiControls.Diurnal;
+        guiControls.Diurnal = (guiControls.Diurnal + 0.015) % 360;
+        guiControls.Diurnal = Math.floor(guiControls.Diurnal * 1000) / 1000;
+        // console.log('yeet', diurnal);
+      }
 
     // I think the below weather and debugging stuff belong (or at least need to be called) in SceneManager too
 
