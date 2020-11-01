@@ -782,7 +782,7 @@ let groundObjects = new Array();
 
 loader.load('assets/unit.glb', onLoadUnit);
 loader.load('assets/control_box.glb', onLoadControlBox);
-loader.load('assets/environments/snow/snow_smooth.glb', onLoadEnvironment);
+// loader.load('assets/environments/snow/snow_smooth.glb', onLoadEnvironment);
 // loader.load('assets/placeholder_sky.glb', onLoadSky);
 // loader.load('assets/placeholder_ground.glb', onLoad);
 loader.load('assets/placeholder_clouds.glb', onLoadClouds);
@@ -843,7 +843,7 @@ function onLoadEnvironment(gltf) {
     }
     // um maybe traverse model instead ^ but this works anyhow
 
-    scene.add(environment);
+    // scene.add(environment);
 }
 
 function onLoadSky(gltf) {
@@ -1089,11 +1089,11 @@ function animate(time) {
         if (cameraY < -0.01 && envOpacity >= 0.1) {
             envOpacity < 0.2 ? envOpacity = 0. : envOpacity -= 0.1;
             updateOpacity(control_box, envOpacity);
-            updateOpacity(environment, envOpacity);
+            // updateOpacity(environment, envOpacity);
         } else if (cameraY > -0.01 && envOpacity <= 0.9) {
             envOpacity > 0.8 ? envOpacity = 1. : envOpacity += 0.1;
             updateOpacity(control_box, envOpacity);
-            updateOpacity(environment, envOpacity);
+            // updateOpacity(environment, envOpacity);
         }
 
         // console.log(envOpacity);
