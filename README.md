@@ -19,7 +19,15 @@ All the code currently in main.js -- modularization and better organization in p
 
 (describe main structure of app)
 
+##### Scene configuration
+
+- Camera has 45 degree FOV
+
 ##### About the stars
+
+See jupyter notebook in data folder for more info on how stars data were prepared.
+
+Observation: star particle size seems largely tied to resolution/pixel density (dpi) of the monitor, which makes stars look blocky on low-res displays. Either need to find different way of defining star size or just makes stars look less-blocky (rounded), which may be easier for now.
 
 ##### About the unit model
 
@@ -31,8 +39,9 @@ Notes about why particular decisions were made (mainly related to art direction 
 
 ###### Lights
 
-- Trying to largely rely on dynamic ambient lighting + fog, and minimize reliance on directional lights which can be slow.
+- Trying to largely rely on dynamic ambient lighting + fog, as well as image-based lighting from an HDR image, while minimizing reliance on directional lights (sun and moon) which can be slow.
 - Light from the sun should always be warm; light from the moon should be cool; ambient light is from the sky and should therefore match its average hue.
+- Discard/hide lights that are below the ground plane
 
 #### Asset creation: 3D models
 
@@ -63,15 +72,17 @@ Image textures were created with Photoshop CC, Procreate 5, and Krita. Note that
 
 Design to fit within a small sphere; unit at center
 
-Can resemble actual locations (ie. a mountaintop, the beach, a rooftop, a forest), or just be for fun (ie. the surface of the moon! or an exoplanet!)
+Can resemble actual locations (ie. a mountaintop, the beach, a rooftop, a forest), or just be for fun (ie. the surface of the moon, or a distant exoplanet!)
 
 ##### Design considerations:
 
-- Environment scenes are comprised of a horizon (image textures on a large cylindrical object/sphere), and custom sky color scheme
+- Environment scenes are comprised of a horizon (image textures on a large cylindrical object/sphere), 3D objects to decorate the scene (ie. plants and flowers), and custom sky color scheme
+  - part of the horizon should be adjustable (by sliding UV textures up and down) to allow for optional syncing with unit config file horizon limits
 - Should not make the scene too crowded (too many objects may cause lag on certain devices)
   - after more experimentation/research, determine max poly count?
 - May be a good idea to create minimal, 'low graphics quality'/'minified' versions of environment scenes which users can opt to view instead (for slower devices)
   - or just aim to make all scenes this lightweight
   - for the future, enabling/disabling post-processing should definitely be an option though
 - The environment scene should look good even when the camera goes below the ground plane, making ground objects transparent. This happens so that the stars are unobscured and entire sky is visible.
+- Still need to look into making custom HDRIs of horizon (in Photoshop?); current one is just a placeholder from HDRI Haven.
 
