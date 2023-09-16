@@ -34,6 +34,9 @@ var sunAltitude = -10.3;
 var previousSunAltitude = sunAltitude;
 var diurnal = 0.;
 var unitLatitude = 34.;
+var cameraRotX = 0.;
+var cameraRotY = 0.;
+var cameraRotZ = 0.;
 
 // stars data was imported from data/mag_5_stars.js in stars_arr
 
@@ -220,9 +223,9 @@ void main(void) {
 
 // FPS stats (by mrdoob) 📊
 
-// var stats = new Stats();
-// document.body.appendChild(stats.dom);
-// requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) });
+var stats = new Stats();
+document.body.appendChild(stats.dom);
+requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) });
 
 
 // Camera settings 🎥
@@ -540,13 +543,34 @@ const stars_material = new THREE.ShaderMaterial({
 
 // Objects 🔭
 
-var line_mat = new THREE.LineBasicMaterial({
-    color: 0x0000ff,
+// Azimuthal grid
+var altaz_grid_primary_mat = new THREE.LineBasicMaterial({
+    // color: sky_uniforms.u_horizon,
+    color: 0xffffff,
     fog: false
 });
 
+
+
+var altaz_grid_secondary_mat = new THREE.LineBasicMaterial({
+    // color: sky_uniforms.u_mid
+})
+
+// Equatorial grid
+
+// On-sky camera FOV?
+var line_mat = new THREE.LineBasicMaterial({
+    color: 0x5279c8,
+    // transparent: true,
+    // opacity: 0.5,
+    fog: false
+});
+
+// console.log(sky_uniforms.u_horizon)
+
 var line_points = [];
-var r = 3.6;
+// var r = 3.6;
+var r = 0;
 // var x = 3.6 * Math.cos(degreesToRadians(15 / 2));
 // var y = 3.6 * Math.sin(degreesToRadians(15 / 2))
 var half_theta_x = 15 / 2;
@@ -605,9 +629,14 @@ for (var i = 0; i < n; i++) {
 var line_geometry = new THREE.BufferGeometry().setFromPoints(line_points);
 
 var line = new THREE.Line(line_geometry, line_mat);
-// scene.add(line);
+scene.add(line);
 // line.rotateY(degreesToRadians(180));
-// line.rotate
+// line.rotateX(degreesToRadians(45))
+// Latitude
+// line.rotateY(degreesToRadians(45))
+line.rotateZ(degreesToRadians(180-unitLatitude))
+line.translateX(3.6)
+
 
 function get_star_data(stars_arr, median_magnitude, base_size) {
 
@@ -912,7 +941,10 @@ var guiControls = new function () {
     this.Sun = sunAltitude;
     this.Diurnal = 0.;
     this.Cloudy = false;
-    this.Axes = false;
+    this.Axes = true;
+    this.CameraRotX = 0.;
+    this.CameraRotY = 0.;
+    this.CameraRotZ = 0.;
 }
 
 var gui = new dat.GUI();
@@ -924,6 +956,9 @@ gui.add(guiControls, 'Sun', -90, 90);
 gui.add(guiControls, 'Diurnal', 0, 360);
 gui.add(guiControls, 'Cloudy');
 gui.add(guiControls, 'Axes');
+gui.add(guiControls, 'CameraRotX', 0, 360);
+gui.add(guiControls, 'CameraRotY', 0, 360);
+gui.add(guiControls, 'CameraRotZ', 0, 360);
 
 
 
@@ -1097,6 +1132,37 @@ function animate(time) {
         }
 
         // console.log(envOpacity);
+    }
+
+    if(line) {
+        if (cameraRotX != guiControls.CameraRotX) {
+            line.translateX(-3.6);
+            line.rotation.x = degreesToRadians(guiControls.CameraRotX);
+            line.translateX(3.6);
+            cameraRotX = guiControls.CameraRotX;
+        }
+
+        if (cameraRotY != guiControls.CameraRotY) {
+            line.translateX(-3.6);
+            line.rotation.y = degreesToRadians(guiControls.CameraRotY);
+            line.translateX(3.6);
+            cameraRotY = guiControls.CameraRotY;
+        }
+
+        if (cameraRotZ != guiControls.CameraRotZ) {
+            line.translateX(-3.6);
+            line.rotation.z = degreesToRadians(guiControls.CameraRotZ);
+            line.translateX(3.6);
+            cameraRotZ = guiControls.CameraRotZ;
+        }
+
+
+        // line.translateX(-3.6);
+        
+        
+        
+        // line.translateX(3.6);
+        
     }
 
     renderer.render(scene, camera);
