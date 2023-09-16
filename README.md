@@ -1,7 +1,7 @@
 # Panoptes3D
 Demo of browser tool for viewing PANOPTES unit telemetry
 
-![](/docs/shore_sm.png | width=100%)
+<img src="https://github.com/sarumanplaysguitar/panoptes3D/blob/master/docs/shore_sm.png?raw=true" width=75%></img>
 
 ### Documentation
 
@@ -35,8 +35,8 @@ Observation: star particle size seems largely tied to resolution/pixel density (
 
 ##### About the sky
 
-![](/docs/skybox_notes.png | width=100%)
-![](/docs/sky_shader.png | width=100%)
+<img src="https://github.com/sarumanplaysguitar/panoptes3D/blob/master/docs/skybox_notes.png?raw=true" width=100%></img>
+<img src="https://github.com/sarumanplaysguitar/panoptes3D/blob/master/docs/sky_shader.png?raw=true" width=100%></img>
 
 ##### Scene design decisions
 
