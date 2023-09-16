@@ -1,6 +1,8 @@
 # Panoptes3D
 Demo of browser tool for viewing PANOPTES unit telemetry
 
+![](/docs/shore_sm.png | width=100%)
+
 ### Documentation
 
 Both the app and this document are WIP
@@ -32,6 +34,9 @@ Observation: star particle size seems largely tied to resolution/pixel density (
 ##### About the unit model
 
 ##### About the sky
+
+![](/docs/skybox_notes.png | width=100%)
+![](/docs/sky_shader.png | width=100%)
 
 ##### Scene design decisions
 
