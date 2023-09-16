@@ -1,7 +1,7 @@
 # Panoptes3D
 Demo of browser tool for viewing PANOPTES unit telemetry
 
-<img src="https://github.com/sarumanplaysguitar/panoptes3D/blob/master/docs/shore_sm.png?raw=true" width=75%></img>
+<img src="https://github.com/sarumanplaysguitar/panoptes3D/blob/master/docs/shore_sm_crop.png?raw=true" width=75%></img>
 
 ### Documentation
 
