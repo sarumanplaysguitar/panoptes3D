@@ -2,21 +2,20 @@
 
 def main(args):
 
-    if args.start_telemetry:
+    if args.start:
         print("PLACEHOLDER: TODO: Make functional")
 
-    if args.stop_telemetry:
+    if args.stop:
         print("PLACEHOLDER: TODO: Make functional")
-
-
 
 if __name__ == '__main__':
     import argparse
+    import pickle
 
-    parser = argparse.ArgumentParser('--start_telemetry', '-on',
+    parser = argparse.ArgumentParser('--start', '-on',
                                      action='store_true')
     
-    parser = argparse.ArguemntParser('--stop_telemetry', '--off',
+    parser = argparse.ArguemntParser('--stop', '--off',
                                      action='store_true')
     
     args = parser.parse_args()
