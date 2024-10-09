@@ -1,7 +1,7 @@
-import * as THREE from '/js/libs/three/build/three.module.js';
-import { OrbitControls } from '/js/libs/three/examples/jsm/controls/OrbitControls.js';
-import { RGBELoader } from '/js/libs/three/examples/jsm/loaders/RGBELoader.js';
-import { GLTFLoader } from '/js/libs/three/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 console.log(`using three.js r${THREE.REVISION}`);
 
@@ -98,10 +98,15 @@ const float PI_4 = 0.78539816339744830962;
 attribute vec3 star_color;
 varying vec3 vColor;
 
+// Undo Linearization function
+vec3 undolinearize(vec3 color) {
+    return pow(color, vec3(.4545454545));  // Convert from linear to sRGB
+}
+
 void main() {
 
     #ifdef USE_COLOR
-    vColor = star_color;
+    vColor = undolinearize(star_color);
     // vColor = vec3( 1.0, 0.0, 0.0 );
     #endif
 
@@ -167,12 +172,26 @@ uniform vec3 u_mid;
 uniform vec3 u_upper;
 uniform vec3 u_white;
 
+// Undo Linearization function
+vec3 undolinearize(vec3 color) {
+    return pow(color, vec3(.46));  // Convert from linear to sRGB
+}
+
 void main() {
     // Mix from the ground up.
-    vec3 mix1 = mix(u_ground, u_horizon, smoothstep(0.5, 0.55, uv.y));
-    vec3 mix2 = mix(mix1, u_low, smoothstep(0.5, 0.65, uv.y));
-    vec3 mix3 = mix(mix2, u_mid, smoothstep(0.5, 0.8, uv.y));
-    vec3 mix4 = mix(mix3, u_upper, smoothstep(0.7, 1., uv.y));
+
+
+    vec3 groundLinear = undolinearize(u_ground);
+    vec3 horizonLinear = undolinearize(u_horizon);
+    vec3 lowLinear = undolinearize(u_low);
+    vec3 midLinear = undolinearize(u_mid);
+    vec3 upperLinear = undolinearize(u_upper);
+
+    vec3 mix1 = mix(groundLinear, horizonLinear, smoothstep(0.5, 0.55, uv.y));
+    vec3 mix2 = mix(mix1, lowLinear, smoothstep(0.5, 0.65, uv.y));
+    vec3 mix3 = mix(mix2, midLinear, smoothstep(0.5, 0.8, uv.y));
+    vec3 mix4 = mix(mix3, upperLinear, smoothstep(0.7, 1.0, uv.y));
+
 
     final_mix = mix4;
 
@@ -234,6 +253,7 @@ var env_scale_fac = 1;
 
 const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("canvas"), alpha: false, antialias: true, precision: "highp" });
 renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.NoToneMapping;
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 40 * 2);
 console.log(`focal length: ${Math.round(camera.getFocalLength())}`);
@@ -253,26 +273,27 @@ controls.update();
 const scene = new THREE.Scene();
 // scene.fog = new THREE.Fog(0x00003f, -20, 20);
 scene.background = new THREE.Color(0x3A3A3A);
-scene.fog = new THREE.Fog(0xffffff, -7, 20);
+// scene.fog = new THREE.Fog(0xffffff, -7, 20);
+scene.fog = new THREE.Fog(0xffffff, -7, 15);
 
 
 
 // Lighting 💡
 
-const light1 = new THREE.PointLight(0xffcfa6, 0.2, 0);
+const light1 = new THREE.PointLight(0xffcfa6, 10000, 0);
 light1.position.set(10, 10, 10);
-scene.add(light1);
+// scene.add(light1);
 
-const light2 = new THREE.PointLight(0xffcfa6, 0.1, 0);
+const light2 = new THREE.PointLight(0xffcfa6, 10000, 0);
 light2.position.set(-10, 10, -10);
-scene.add(light2);
+// scene.add(light2);
 
 // var directionalLight = new THREE.DirectionalLight(0xffffff, 2);
 // scene.add(directionalLight);
 
 // var ambient_light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.5);
-var ambient_light = new THREE.AmbientLight(0xbfa6ff);
-ambient_light.intensity = 0.5;
+var ambient_light = new THREE.AmbientLight(0xffffff);
+ambient_light.intensity = 10;
 scene.add(ambient_light);
 
 
@@ -282,22 +303,22 @@ scene.add(ambient_light);
 
 // HDRI 🌇
 
-var pmremGenerator = new THREE.PMREMGenerator(renderer);
-new RGBELoader()
-    .setDataType(THREE.UnsignedByteType)
-    .setPath('assets/hdri/')
-    .load('placeholder_sunset.hdr', function (texture) {
+// var pmremGenerator = new THREE.PMREMGenerator(renderer);
+// new RGBELoader()
+//     .setDataType(THREE.FloatType)
+//     .setPath('assets/hdri/')
+//     .load('placeholder_sunset.hdr', function (texture) {
 
-    var envMap = pmremGenerator.fromEquirectangular(texture).texture;
-    pmremGenerator.compileCubemapShader();
+//     var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+//     pmremGenerator.compileCubemapShader();
 
-    // scene.background = envMap;
-    scene.environment = envMap;
+//     // scene.background = envMap;
+//     scene.environment = envMap;
 
-    texture.dispose();
-    pmremGenerator.dispose();
+//     texture.dispose();
+//     pmremGenerator.dispose();
 
-    });
+//     });
 
 
 // Materials 🎨
@@ -465,6 +486,9 @@ function blend_sky_colors(sunAltitude, sun_thresholds, sky_colors) {
 
 // Assign initial sky colors
 var blended_sky_colors = blend_sky_colors(sunAltitude, sun_thresholds, sky_colors);
+console.log(blended_sky_colors)
+// var blended_sky_colors = blend_sky_colors(sunAltitude, sun_thresholds, sky_colors).map(color => {
+//     return new THREE.Color(color).convertSRGBToLinear();  // Convert from sRGB to Linear
 
 function update_colors(sky_uniforms, ground_uniforms, new_sky_colors) {
     // Update any colors dependent on sun latitude here, ie. sky and ground
@@ -517,6 +541,8 @@ const ground_material = new THREE.ShaderMaterial({
     fog: false,
     transparent: true
 });
+
+console.log(ground_uniforms);
 
 const stars_uniforms = {
     u_time: { value: 0.0 },
@@ -629,13 +655,9 @@ for (var i = 0; i < n; i++) {
 var line_geometry = new THREE.BufferGeometry().setFromPoints(line_points);
 
 var line = new THREE.Line(line_geometry, line_mat);
-scene.add(line);
-// line.rotateY(degreesToRadians(180));
-// line.rotateX(degreesToRadians(45))
-// Latitude
-// line.rotateY(degreesToRadians(45))
-line.rotateZ(degreesToRadians(180-unitLatitude))
-line.translateX(3.6)
+// scene.add(line);
+// line.rotateZ(degreesToRadians(180-unitLatitude))
+// line.translateX(3.6)
 
 
 function get_star_data(stars_arr, median_magnitude, base_size) {
@@ -785,14 +807,14 @@ scene.add(faint_stars);
 // scene.add(faintest_stars);
 
 
-var ground_geometry = new THREE.PlaneBufferGeometry(7.4 * (env_scale_fac * 0.4), 7.4 * (env_scale_fac * 0.4), 1, 1);
+var ground_geometry = new THREE.PlaneGeometry(7.4 * (env_scale_fac * 0.4), 7.4 * (env_scale_fac * 0.4), 1, 1);
 var ground_test = new THREE.Mesh(ground_geometry, ground_material);
 ground_test.position.y = -0.01;
 ground_test.rotateX(-PI / 2);
 // scene.add(ground_test);
 // ground_test.visible = false;
 
-var sky_geometry = new THREE.SphereBufferGeometry(3.7 * env_scale_fac, 50, 26);
+var sky_geometry = new THREE.SphereGeometry(3.7 * env_scale_fac, 50, 26);
 var sky_test = new THREE.Mesh(sky_geometry, sky_material);
 scene.add(sky_test);
 
@@ -801,7 +823,7 @@ scene.add(sky_test);
 // scene.add(horizon_test);
 
 var axesHelper = new THREE.AxesHelper(5);
-scene.add(axesHelper);
+// scene.add(axesHelper);
 
 var loader = new GLTFLoader();
 
@@ -854,7 +876,7 @@ function onLoadControlBox(gltf) {
     }
     // um maybe traverse model instead ^ but this works anyhow
 
-    scene.add(control_box);
+    // scene.add(control_box);
 }
 
 function onLoadEnvironment(gltf) {
