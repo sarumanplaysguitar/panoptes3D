@@ -280,11 +280,11 @@ scene.fog = new THREE.Fog(0xffffff, -7, 15);
 
 // Lighting 💡
 
-const light1 = new THREE.PointLight(0xffffff, 1000, 0);
+const light1 = new THREE.PointLight(0x696969, 1000, 0);
 light1.position.set(10, 10, 10);
 scene.add(light1);
 
-const light2 = new THREE.PointLight(0xffffff, 1000, 0);
+const light2 = new THREE.PointLight(0x696969, 1000, 0);
 light2.position.set(-10, 10, -10);
 scene.add(light2);
 
@@ -292,7 +292,7 @@ scene.add(light2);
 // scene.add(directionalLight);
 
 // var ambient_light = new THREE.AmbientLight(0xbfa6ff, intensity = 0.5);
-var ambient_light = new THREE.AmbientLight(0xffffff);
+var ambient_light = new THREE.AmbientLight(0x696969);
 ambient_light.intensity = 500;
 scene.add(ambient_light);
 
